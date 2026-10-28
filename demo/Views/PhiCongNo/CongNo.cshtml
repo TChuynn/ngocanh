@@ -1,0 +1,16 @@
+@model List<CongNo>
+@{ ViewData["Title"] = "Công nợ"; }
+<h4 class="mb-3">📒 Công nợ theo sinh viên</h4>
+<table class="table table-striped">
+    <thead><tr><th>Sinh viên</th><th>Tổng nợ hiện tại</th><th>Cập nhật lần cuối</th></tr></thead>
+    <tbody>
+    @foreach (var cn in Model)
+    {
+        <tr>
+            <td>@cn.SinhVien?.MSSV - @cn.SinhVien?.TaiKhoan?.HoTen</td>
+            <td class="@(cn.TongNoHienTai > 0 ? "text-danger fw-bold" : "text-success")">@cn.TongNoHienTai.ToString("N0")đ</td>
+            <td>@cn.CapNhatLanCuoi.ToString("dd/MM/yyyy HH:mm")</td>
+        </tr>
+    }
+    </tbody>
+</table>

@@ -1,0 +1,38 @@
+@model List<DangKyO>
+@{ ViewData["Title"] = "Đăng ký ở của tôi"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>🛏️ Đăng ký ở của tôi</h4>
+    <a asp-action="GuiYeuCau" class="btn btn-primary">+ Gửi yêu cầu đăng ký ở</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Bạn chưa có yêu cầu đăng ký ở nào.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead><tr><th>Ngày đăng ký</th><th>Phòng</th><th>Giường</th><th>Trạng thái</th><th>Ghi chú</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var dk in Model)
+        {
+            <tr>
+                <td>@dk.NgayDangKy.ToString("dd/MM/yyyy")</td>
+                <td>@dk.Phong?.SoPhong</td>
+                <td>@dk.Giuong?.SoGiuong</td>
+                <td><span class="badge text-bg-info">@dk.TrangThai</span></td>
+                <td class="small">@dk.GhiChu</td>
+                <td>
+                    @if (dk.TrangThai == TrangThaiDangKyO.DangO)
+                    {
+                        <form asp-action="YeuCauTraPhong" method="post" onsubmit="return confirm('Bạn chắc chắn muốn gửi yêu cầu trả phòng?');">
+                            <input type="hidden" name="id" value="@dk.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Yêu cầu trả phòng</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,11 @@
+@{ ViewData["Title"] = "Gửi yêu cầu đăng ký ở"; }
+<h4>Gửi yêu cầu đăng ký ở KTX</h4>
+<form asp-action="GuiYeuCau" method="post" class="col-md-6">
+    <div class="mb-3">
+        <label class="form-label">Ghi chú (nguyện vọng, VD: muốn ở cùng phòng với bạn...)</label>
+        <textarea name="ghiChu" class="form-control" rows="3"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+    <a asp-action="CuaToi" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<p class="text-muted small mt-3">Sau khi gửi, Quản lý KTX sẽ xem xét và xếp phòng cho bạn (có sự hỗ trợ gợi ý từ AI).</p>

@@ -1,0 +1,38 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-3 text-center">🏢 Đăng nhập hệ thống KTX AI</h4>
+
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Tên đăng nhập</label>
+                        <input asp-for="TenDangNhap" class="form-control" autofocus />
+                        <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input asp-for="MatKhau" class="form-control" type="password" />
+                        <span asp-validation-for="MatKhau" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+                </form>
+
+                <hr />
+                <p class="small text-muted mb-1">Tài khoản demo (mật khẩu chung: <code>123456</code>):</p>
+                <ul class="small text-muted mb-0">
+                    <li><b>quanly</b> — Quản lý KTX</li>
+                    <li><b>ketoan</b> — Kế toán</li>
+                    <li><b>sv001, sv002, sv003, sv004</b> — Sinh viên</li>
+                    <li><b>sv005</b> — tài khoản minh hoạ đã <b>bị khóa</b> (UC001-A3)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

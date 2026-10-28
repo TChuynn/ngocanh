@@ -1,0 +1,32 @@
+@model List<PhieuPhi>
+@{ ViewData["Title"] = "Phiếu phí"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>💰 Danh sách phiếu phí phòng</h4>
+    <div>
+        <a asp-action="CongNo" class="btn btn-outline-dark me-2">Xem công nợ</a>
+        <a asp-action="TaoPhieuPhi" class="btn btn-primary">+ Tạo phiếu phí</a>
+    </div>
+</div>
+<table class="table table-striped">
+    <thead><tr><th>Sinh viên</th><th>Tháng</th><th>Phải đóng</th><th>Đã đóng</th><th>Còn lại</th><th>Hạn</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var pp in Model)
+    {
+        <tr>
+            <td>@pp.SinhVien?.MSSV - @pp.SinhVien?.TaiKhoan?.HoTen</td>
+            <td>@pp.ThangNam</td>
+            <td>@pp.SoTienPhaiDong.ToString("N0")đ</td>
+            <td>@pp.SoTienDaDong.ToString("N0")đ</td>
+            <td class="@(pp.SoTienConLai > 0 ? "text-danger" : "text-success")">@pp.SoTienConLai.ToString("N0")đ</td>
+            <td>@pp.HanThanhToan.ToString("dd/MM/yyyy")</td>
+            <td><span class="badge text-bg-@(pp.TrangThai == TrangThaiPhieuPhi.DaThanhToan ? "success" : pp.TrangThai == TrangThaiPhieuPhi.QuaHan ? "danger" : "warning")">@pp.TrangThai</span></td>
+            <td>
+                @if (pp.TrangThai != TrangThaiPhieuPhi.DaThanhToan)
+                {
+                    <a asp-action="GhiNhanThanhToan" asp-route-id="@pp.Id" class="btn btn-sm btn-outline-primary">Ghi nhận thanh toán</a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

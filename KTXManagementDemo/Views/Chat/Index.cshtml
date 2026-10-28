@@ -1,0 +1,13 @@
+@{ ViewData["Title"] = "Trợ lý AI"; }
+<h4 class="mb-3">🤖 Trợ lý AI - Hỏi đáp về hệ thống KTX</h4>
+<p class="text-muted">Bạn cũng có thể dùng khung chat nổi ở góc dưới bên phải màn hình tại bất kỳ trang nào.</p>
+<div class="alert alert-light border">
+    Gợi ý câu hỏi: "Còn phòng trống không?", "Công nợ của tôi bao nhiêu?", "Làm sao để đăng ký ở KTX?", "Cách gửi phản ánh sự cố?"
+</div>
+<script>
+    // Tự động mở khung chat nổi khi vào trang này cho tiện demo
+    document.addEventListener('DOMContentLoaded', function () {
+        var box = document.getElementById('ktx-chat-box');
+        if (box) box.classList.remove('d-none');
+    });
+</script>

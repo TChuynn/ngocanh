@@ -1,0 +1,24 @@
+@model PhanAnhSuCo
+@{
+    ViewData["Title"] = "Gửi phản ánh/sự cố";
+    var phong = ViewBag.PhongHienTai as Phong;
+}
+<h4>Gửi phản ánh / sự cố mới</h4>
+<div asp-validation-summary="All" class="text-danger"></div>
+<p class="text-muted">Phòng hiện tại của bạn: <b>@(phong?.SoPhong ?? "Chưa xếp phòng")</b></p>
+<form asp-action="Gui" method="post" class="col-md-6">
+    <div class="mb-3">
+        <label class="form-label">Loại phản ánh</label>
+        <select asp-for="LoaiPhanAnh" class="form-select" asp-items="Html.GetEnumSelectList<LoaiPhanAnh>()"></select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Tiêu đề</label>
+        <input asp-for="TieuDe" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Nội dung chi tiết</label>
+        <textarea asp-for="NoiDung" class="form-control" rows="4" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Gửi phản ánh</button>
+    <a asp-action="CuaToi" class="btn btn-outline-secondary">Hủy</a>
+</form>

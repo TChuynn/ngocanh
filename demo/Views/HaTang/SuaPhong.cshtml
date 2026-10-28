@@ -1,0 +1,79 @@
+@model Phong
+@{
+    ViewData["Title"] = "Sửa thông tin phòng " + Model.SoPhong;
+    var danhSachTang = ViewBag.DanhSachTang as List<Tang> ?? new();
+    var soSvDangO = Model.DanhSachGiuong.Count(g => g.TrangThai == TrangThaiGiuong.DaCoNguoi || g.SinhVienId != null);
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">✏️ Chỉnh sửa Phòng @Model.SoPhong</h5>
+                <span class="badge bg-light text-dark">Hiện có: @soSvDangO SV đang ở</span>
+            </div>
+            <div class="card-body">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <form asp-action="SuaPhong" method="post">
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Thuộc Tầng &amp; Tòa nhà</label>
+                        <select asp-for="TangId" class="form-select" required>
+                            @foreach (var t in danhSachTang)
+                            {
+                                <option value="@t.Id" selected="@(t.Id == Model.TangId ? "selected" : null)">
+                                    @t.ToaNha?.TenToaNha - Tầng @t.SoThuTu
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số phòng</label>
+                        <input asp-for="SoPhong" class="form-control" placeholder="VD: A101" required />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Sức chứa (Số sinh viên tối đa)</label>
+                            <input asp-for="SucChua" type="number" min="@Math.Max(1, soSvDangO)" max="20" class="form-control" required />
+                            <div class="form-text text-muted">
+                                Tối thiểu: <b>@soSvDangO</b> (số sinh viên hiện đang ở).
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Đơn giá / tháng (VNĐ)</label>
+                            <input asp-for="DonGiaThang" type="number" min="0" step="10000" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trạng thái phòng</label>
+                        <select asp-for="TrangThai" class="form-select">
+                            <option value="@TrangThaiPhong.Trong" selected="@(Model.TrangThai == TrangThaiPhong.Trong ? "selected" : null)">Trống</option>
+                            <option value="@TrangThaiPhong.DangSuDung" selected="@(Model.TrangThai == TrangThaiPhong.DangSuDung ? "selected" : null)">Đang sử dụng</option>
+                            <option value="@TrangThaiPhong.Day" selected="@(Model.TrangThai == TrangThaiPhong.Day ? "selected" : null)">Đầy</option>
+                            <option value="@TrangThaiPhong.BaoTri" selected="@(Model.TrangThai == TrangThaiPhong.BaoTri ? "selected" : null)">Bảo trì</option>
+                        </select>
+                        <div class="form-text">Ghi chú: Nếu không phải Bảo trì, hệ thống sẽ tự động cập nhật Trống/Đang sử dụng/Đầy dựa trên số sinh viên.</div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="tuDongDieuChinhGiuong" id="tuDongDieuChinhGiuong" value="true" checked />
+                        <label class="form-check-label fw-semibold" for="tuDongDieuChinhGiuong">
+                            Tự động đồng bộ số giường theo sức chứa mới (thêm giường trống nếu tăng sức chứa, thu hồi giường trống nếu giảm)
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

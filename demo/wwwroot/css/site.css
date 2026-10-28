@@ -1,0 +1,101 @@
+body {
+    background-color: #f4f6f9;
+}
+
+.card {
+    margin-bottom: 1rem;
+}
+
+table.table {
+    background: white;
+}
+
+/* ===== Chat widget ===== */
+#ktx-chat-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    z-index: 1050;
+    cursor: pointer;
+}
+
+#ktx-chat-box {
+    position: fixed;
+    bottom: 90px;
+    right: 24px;
+    width: 340px;
+    max-width: 90vw;
+    height: 440px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1050;
+}
+
+.ktx-chat-header {
+    background: #0d6efd;
+    color: white;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+
+.ktx-chat-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.ktx-msg {
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    max-width: 85%;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+}
+
+.ktx-msg-bot {
+    background: #e9ecef;
+    color: #212529;
+    margin-right: auto;
+}
+
+.ktx-msg-user {
+    background: #0d6efd;
+    color: white;
+    margin-left: auto;
+}
+
+.ktx-msg-loading {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.ktx-chat-input {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    border-top: 1px solid #dee2e6;
+}
+
+.ktx-chat-input input {
+    flex: 1;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px 10px;
+}

@@ -1,0 +1,12 @@
+@model Tang
+@{ ViewData["Title"] = "Thêm tầng"; }
+<h4>Thêm tầng mới cho @((ViewBag.ToaNha as ToaNha)?.TenToaNha)</h4>
+<form asp-action="TaoTang" method="post" class="col-md-6">
+    <input type="hidden" asp-for="ToaNhaId" />
+    <div class="mb-3">
+        <label class="form-label">Số thứ tự tầng</label>
+        <input asp-for="SoThuTu" type="number" min="1" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>

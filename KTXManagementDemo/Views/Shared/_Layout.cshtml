@@ -1,0 +1,90 @@
+@{
+    var vaiTro = User.Identity?.IsAuthenticated == true ? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value : null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Hệ thống quản lý KTX AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">🏢 KTX AI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav me-auto">
+                    @if (vaiTro == "QuanLyKTX")
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="HaTang" asp-action="Index">Hạ tầng KTX</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="SinhVien" asp-action="Index">Hồ sơ sinh viên</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="DangKyO" asp-action="Index">Đăng ký ở</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhiCongNo" asp-action="Index">Phí &amp; Công nợ</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhanAnh" asp-action="Index">Phản ánh/Sự cố</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="ThongKe" asp-action="Index">Thống kê</a></li>
+                    }
+                    else if (vaiTro == "SinhVien")
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="SinhVien" asp-action="HoSoCuaToi">Hồ sơ của tôi</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="DangKyO" asp-action="CuaToi">Đăng ký ở của tôi</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhiCongNo" asp-action="CuaToi">Phí phòng của tôi</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhanAnh" asp-action="CuaToi">Phản ánh của tôi</a></li>
+                    }
+                    else if (vaiTro == "KeToan")
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhiCongNo" asp-action="Index">Phiếu phí</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhiCongNo" asp-action="CongNo">Công nợ</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="PhiCongNo" asp-action="TaoPhieuPhi">Tạo phiếu phí</a></li>
+                    }
+                </ul>
+                <ul class="navbar-nav">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item"><span class="nav-link text-white-50">Xin chào, @User.GetHoTen() (@vaiTro)</span></li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        @if (TempData["ThongBao"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["ThongBao"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Loi"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Loi"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @RenderBody()
+    </div>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        @await Html.PartialAsync("_ChatWidget")
+    }
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

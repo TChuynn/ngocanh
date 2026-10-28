@@ -1,0 +1,31 @@
+@model List<Phong>
+@{
+    var yeuCau = ViewBag.YeuCau as DangKyO;
+    ViewData["Title"] = "Chuyển phòng";
+}
+<h4>🔁 Chuyển phòng cho sinh viên @yeuCau?.SinhVien?.MSSV</h4>
+<p>Đang ở phòng hiện tại: <b>@yeuCau?.Phong?.SoPhong</b> (giá @yeuCau?.Phong?.DonGiaThang.ToString("N0")đ/tháng)</p>
+<p class="text-muted small">Nếu giá phòng mới khác phòng cũ, hệ thống sẽ tự tạo phiếu phí chênh lệch cho tháng hiện tại.</p>
+
+<div class="row">
+@foreach (var phong in Model)
+{
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6>Phòng @phong.SoPhong <span class="badge text-bg-secondary">@phong.SoGiuongTrong trống</span></h6>
+                <div class="small text-muted mb-2">Giá: @phong.DonGiaThang.ToString("N0")đ/tháng</div>
+                @foreach (var giuong in phong.DanhSachGiuong.Where(g => g.TrangThai == TrangThaiGiuong.Trong))
+                {
+                    <form asp-action="XacNhanChuyenPhong" method="post" class="d-inline">
+                        <input type="hidden" name="yeuCauId" value="@yeuCau!.Id" />
+                        <input type="hidden" name="giuongMoiId" value="@giuong.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-warning mb-1">Chuyển tới giường @giuong.SoGiuong</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+}
+</div>
+<a asp-action="Index" class="btn btn-outline-secondary mt-2">Quay lại danh sách</a>

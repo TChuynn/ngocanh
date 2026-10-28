@@ -1,0 +1,93 @@
+@model KTXManagement.Demo.Controllers.SuaSinhVienInput
+@{
+    ViewData["Title"] = "Sửa hồ sơ sinh viên " + Model.MSSV;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">✏️ Chỉnh sửa hồ sơ sinh viên: @Model.MSSV - @Model.HoTen</h5>
+            </div>
+            <div class="card-body">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <form asp-action="Sua" method="post">
+                    <input type="hidden" asp-for="Id" />
+
+                    <h6 class="text-primary border-bottom pb-2 mb-3">Thông tin tài khoản đăng nhập</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Tên đăng nhập</label>
+                            <input asp-for="TenDangNhap" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Mật khẩu mới (để trống nếu giữ nguyên)</label>
+                            <input asp-for="MatKhauMoi" type="password" class="form-control" placeholder="Nhập mật khẩu mới nếu muốn đổi" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Họ và tên</label>
+                            <input asp-for="HoTen" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            <input asp-for="Email" type="email" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trạng thái tài khoản</label>
+                        <select asp-for="TrangThaiTaiKhoan" class="form-select">
+                            <option value="@TrangThaiTaiKhoan.HoatDong" selected="@(Model.TrangThaiTaiKhoan == TrangThaiTaiKhoan.HoatDong ? "selected" : null)">Hoạt động</option>
+                            <option value="@TrangThaiTaiKhoan.BiKhoa" selected="@(Model.TrangThaiTaiKhoan == TrangThaiTaiKhoan.BiKhoa ? "selected" : null)">Bị khóa</option>
+                        </select>
+                    </div>
+
+                    <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">Thông tin sinh viên</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Mã số sinh viên (MSSV)</label>
+                            <input asp-for="MSSV" class="form-control" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Lớp</label>
+                            <input asp-for="Lop" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Khoa</label>
+                            <input asp-for="Khoa" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Giới tính</label>
+                            <select asp-for="GioiTinh" class="form-select" asp-items="Html.GetEnumSelectList<GioiTinh>()"></select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Ngày sinh</label>
+                            <input asp-for="NgaySinh" type="date" class="form-control" value="@(Model.NgaySinh?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Quê quán</label>
+                            <input asp-for="QueQuan" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Trạng thái ở KTX</label>
+                        <select asp-for="TrangThaiO" class="form-select" asp-items="Html.GetEnumSelectList<TrangThaiOKTX>()"></select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">💾 Lưu thông tin</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

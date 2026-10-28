@@ -1,0 +1,23 @@
+@model PhieuPhi
+@{ ViewData["Title"] = "Ghi nhận thanh toán"; }
+<h4>Ghi nhận thanh toán</h4>
+<div class="card mb-3">
+    <div class="card-body">
+        <p>Sinh viên: <b>@Model.SinhVien?.MSSV - @Model.SinhVien?.TaiKhoan?.HoTen</b></p>
+        <p>Tháng: <b>@Model.ThangNam</b> — Phải đóng: <b>@Model.SoTienPhaiDong.ToString("N0")đ</b></p>
+        <p>Đã đóng: <b>@Model.SoTienDaDong.ToString("N0")đ</b> — Còn lại: <b class="text-danger">@Model.SoTienConLai.ToString("N0")đ</b></p>
+    </div>
+</div>
+<form asp-action="GhiNhanThanhToan" method="post" class="col-md-6">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <div class="mb-3">
+        <label class="form-label">Số tiền thanh toán (đ)</label>
+        <input name="soTien" type="number" min="1" max="@Model.SoTienConLai" class="form-control" value="@Model.SoTienConLai" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Ghi chú</label>
+        <input name="ghiChu" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Ghi nhận</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>

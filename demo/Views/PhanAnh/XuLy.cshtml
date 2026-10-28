@@ -1,0 +1,36 @@
+@model PhanAnhSuCo
+@{ ViewData["Title"] = "Xử lý phản ánh"; }
+<h4>Xử lý phản ánh / sự cố</h4>
+<div class="card mb-3">
+    <div class="card-body">
+        <p><b>Sinh viên:</b> @Model.SinhVien?.MSSV — <b>Phòng:</b> @Model.Phong?.SoPhong</p>
+        <p><b>Loại:</b> @Model.LoaiPhanAnh — <b>Ngày gửi:</b> @Model.NgayGui.ToString("dd/MM/yyyy")</p>
+        <p><b>Tiêu đề:</b> @Model.TieuDe</p>
+        <p><b>Nội dung:</b> @Model.NoiDung</p>
+    </div>
+</div>
+<form asp-action="XuLy" method="post" class="col-md-6">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <div class="mb-3">
+        <label class="form-label">Trạng thái xử lý</label>
+        <select name="trangThai" class="form-select">
+            @foreach (var tt in Enum.GetValues<TrangThaiPhanAnh>())
+            {
+                if (tt == Model.TrangThai)
+                {
+                    <option value="@tt" selected>@tt</option>
+                }
+                else
+                {
+                    <option value="@tt">@tt</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Phản hồi cho sinh viên</label>
+        <textarea name="phanHoi" class="form-control" rows="3">@Model.PhanHoi</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu xử lý</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>

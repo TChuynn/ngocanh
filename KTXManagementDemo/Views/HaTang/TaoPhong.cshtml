@@ -1,0 +1,27 @@
+@model Phong
+@{
+    var tang = ViewBag.Tang as Tang;
+    ViewData["Title"] = "Thêm phòng";
+}
+<h4>Thêm phòng mới - @tang?.ToaNha?.TenToaNha, tầng @tang?.SoThuTu</h4>
+<form asp-action="TaoPhong" method="post" class="col-md-6">
+    <input type="hidden" asp-for="TangId" />
+    <div class="mb-3">
+        <label class="form-label">Số phòng</label>
+        <input asp-for="SoPhong" class="form-control" placeholder="VD: A301" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Sức chứa (số giường tối đa)</label>
+        <input asp-for="SucChua" type="number" min="1" max="20" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Đơn giá / tháng (đ)</label>
+        <input asp-for="DonGiaThang" type="number" min="0" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Số giường muốn tạo ngay (mặc định = sức chứa)</label>
+        <input name="soGiuongTao" type="number" min="0" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>

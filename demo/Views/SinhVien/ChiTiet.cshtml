@@ -1,0 +1,68 @@
+@model SinhVien
+@{ ViewData["Title"] = "Chi tiết sinh viên"; }
+<h4>🎓 Hồ sơ sinh viên: @Model.MSSV - @Model.TaiKhoan?.HoTen</h4>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4"><b>MSSV:</b> @Model.MSSV</div>
+            <div class="col-md-4"><b>Lớp:</b> @Model.Lop</div>
+            <div class="col-md-4"><b>Khoa:</b> @Model.Khoa</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-4"><b>Giới tính:</b> @Model.GioiTinh</div>
+            <div class="col-md-4"><b>Ngày sinh:</b> @Model.NgaySinh?.ToString("dd/MM/yyyy")</div>
+            <div class="col-md-4"><b>Quê quán:</b> @Model.QueQuan</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-4"><b>Email:</b> @Model.TaiKhoan?.Email</div>
+            <div class="col-md-4"><b>Trạng thái ở:</b> <span class="badge text-bg-info">@Model.TrangThaiO</span></div>
+            <div class="col-md-4"><b>Công nợ:</b> <span class="@(Model.CongNo?.TongNoHienTai > 0 ? "text-danger" : "text-success")">@((Model.CongNo?.TongNoHienTai ?? 0).ToString("N0"))đ</span></div>
+        </div>
+    </div>
+</div>
+
+@if (Model.DanhSachDangKyO.Any())
+{
+    <h5>Lịch sử đăng ký ở</h5>
+    <table class="table table-sm table-bordered">
+        <thead><tr><th>Ngày đăng ký</th><th>Phòng</th><th>Trạng thái</th><th>Nhận phòng</th><th>Trả phòng</th></tr></thead>
+        <tbody>
+        @foreach (var dk in Model.DanhSachDangKyO.OrderByDescending(d => d.NgayDangKy))
+        {
+            <tr>
+                <td>@dk.NgayDangKy.ToString("dd/MM/yyyy")</td>
+                <td>@dk.Phong?.SoPhong</td>
+                <td>@dk.TrangThai</td>
+                <td>@dk.NgayNhanPhong?.ToString("dd/MM/yyyy")</td>
+                <td>@dk.NgayTraPhong?.ToString("dd/MM/yyyy")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@if (Model.DanhSachPhanAnh != null && Model.DanhSachPhanAnh.Any())
+{
+    <h5>Phản ánh/sự cố đã gửi</h5>
+    <ul class="list-group mb-3">
+        @foreach (var pa in Model.DanhSachPhanAnh.OrderByDescending(p => p.NgayGui))
+        {
+            <li class="list-group-item d-flex justify-content-between">
+                <span>@pa.TieuDe (@pa.NgayGui.ToString("dd/MM/yyyy"))</span>
+                <span class="badge text-bg-secondary">@pa.TrangThai</span>
+            </li>
+        }
+    </ul>
+}
+
+<div class="d-flex gap-2">
+    @if (User.IsInRole("QuanLyKTX"))
+    {
+        <a asp-action="Sua" asp-route-id="@Model.Id" class="btn btn-warning">✏️ Sửa thông tin sinh viên</a>
+        <form asp-action="Xoa" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sinh viên @Model.MSSV?');">
+            <button type="submit" class="btn btn-danger">🗑️ Xóa sinh viên</button>
+        </form>
+    }
+    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+</div>

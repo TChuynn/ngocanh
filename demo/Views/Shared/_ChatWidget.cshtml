@@ -1,0 +1,72 @@
+@{
+    var antiForgeryToken = Html.AntiForgeryToken();
+}
+<div id="ktx-chat-widget">
+    <button id="ktx-chat-toggle" type="button" title="Hỏi trợ lý AI KTX">💬</button>
+
+    <div id="ktx-chat-box" class="d-none">
+        <div class="ktx-chat-header">
+            <span>🤖 Trợ lý AI - KTX</span>
+            <button id="ktx-chat-close" type="button" class="btn-close btn-close-white"></button>
+        </div>
+        <div id="ktx-chat-messages" class="ktx-chat-messages">
+            <div class="ktx-msg ktx-msg-bot">Xin chào! Mình có thể giúp gì cho bạn về đăng ký ở, phòng/giường, phí - công nợ hoặc phản ánh/sự cố?</div>
+        </div>
+        <form id="ktx-chat-form" class="ktx-chat-input">
+            @antiForgeryToken
+            <input type="text" id="ktx-chat-input" placeholder="Nhập câu hỏi..." autocomplete="off" />
+            <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const toggleBtn = document.getElementById('ktx-chat-toggle');
+        const closeBtn = document.getElementById('ktx-chat-close');
+        const box = document.getElementById('ktx-chat-box');
+        const form = document.getElementById('ktx-chat-form');
+        const input = document.getElementById('ktx-chat-input');
+        const messages = document.getElementById('ktx-chat-messages');
+
+        toggleBtn.addEventListener('click', () => box.classList.toggle('d-none'));
+        closeBtn.addEventListener('click', () => box.classList.add('d-none'));
+
+        function themTinNhan(noiDung, laBot) {
+            const div = document.createElement('div');
+            div.className = laBot ? 'ktx-msg ktx-msg-bot' : 'ktx-msg ktx-msg-user';
+            div.innerText = noiDung;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const cauHoi = input.value.trim();
+            if (!cauHoi) return;
+            themTinNhan(cauHoi, false);
+            input.value = '';
+
+            const dangGoi = document.createElement('div');
+            dangGoi.className = 'ktx-msg ktx-msg-bot ktx-msg-loading';
+            dangGoi.innerText = 'Đang trả lời...';
+            messages.appendChild(dangGoi);
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const token = document.querySelector('#ktx-chat-form input[name="__RequestVerificationToken"]').value;
+                const res = await fetch('/Chat/Ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify({ message: cauHoi })
+                });
+                const data = await res.json();
+                dangGoi.remove();
+                themTinNhan(data.reply, true);
+            } catch (err) {
+                dangGoi.remove();
+                themTinNhan('Xin lỗi, đã có lỗi xảy ra khi gọi trợ lý AI. Vui lòng thử lại.', true);
+            }
+        });
+    })();
+</script>

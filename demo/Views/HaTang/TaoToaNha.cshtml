@@ -1,0 +1,15 @@
+@model ToaNha
+@{ ViewData["Title"] = "Thêm tòa nhà"; }
+<h4>Thêm tòa nhà mới</h4>
+<form asp-action="TaoToaNha" method="post" class="col-md-6">
+    <div class="mb-3">
+        <label class="form-label">Tên tòa nhà</label>
+        <input asp-for="TenToaNha" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Mô tả</label>
+        <input asp-for="MoTa" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+</form>

@@ -1,0 +1,26 @@
+@model List<PhieuPhi>
+@{
+    ViewData["Title"] = "Phí phòng của tôi";
+    var congNo = ViewBag.CongNo as CongNo;
+}
+<h4 class="mb-3">💰 Phí phòng của tôi</h4>
+<div class="alert @(congNo?.TongNoHienTai > 0 ? "alert-danger" : "alert-success")">
+    Công nợ hiện tại: <b>@((congNo?.TongNoHienTai ?? 0).ToString("N0"))đ</b>
+</div>
+<table class="table table-striped">
+    <thead><tr><th>Tháng</th><th>Phải đóng</th><th>Đã đóng</th><th>Còn lại</th><th>Hạn</th><th>Trạng thái</th></tr></thead>
+    <tbody>
+    @foreach (var pp in Model)
+    {
+        <tr>
+            <td>@pp.ThangNam</td>
+            <td>@pp.SoTienPhaiDong.ToString("N0")đ</td>
+            <td>@pp.SoTienDaDong.ToString("N0")đ</td>
+            <td class="@(pp.SoTienConLai > 0 ? "text-danger" : "text-success")">@pp.SoTienConLai.ToString("N0")đ</td>
+            <td>@pp.HanThanhToan.ToString("dd/MM/yyyy")</td>
+            <td><span class="badge text-bg-@(pp.TrangThai == TrangThaiPhieuPhi.DaThanhToan ? "success" : pp.TrangThai == TrangThaiPhieuPhi.QuaHan ? "danger" : "warning")">@pp.TrangThai</span></td>
+        </tr>
+    }
+    </tbody>
+</table>
+<p class="text-muted small">Việc thanh toán được thực hiện trực tiếp với Kế toán KTX (bản demo chưa tích hợp cổng thanh toán online).</p>

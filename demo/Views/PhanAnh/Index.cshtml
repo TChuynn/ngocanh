@@ -1,0 +1,20 @@
+@model List<PhanAnhSuCo>
+@{ ViewData["Title"] = "Phản ánh / Sự cố"; }
+<h4 class="mb-3">📢 Danh sách phản ánh / sự cố</h4>
+<table class="table table-striped">
+    <thead><tr><th>Ngày gửi</th><th>Sinh viên</th><th>Phòng</th><th>Loại</th><th>Tiêu đề</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var pa in Model)
+    {
+        <tr>
+            <td>@pa.NgayGui.ToString("dd/MM/yyyy")</td>
+            <td>@pa.SinhVien?.MSSV</td>
+            <td>@pa.Phong?.SoPhong</td>
+            <td>@pa.LoaiPhanAnh</td>
+            <td>@pa.TieuDe</td>
+            <td><span class="badge text-bg-@(pa.TrangThai == TrangThaiPhanAnh.DaXuLy ? "success" : pa.TrangThai == TrangThaiPhanAnh.Moi ? "danger" : "warning")">@pa.TrangThai</span></td>
+            <td><a asp-action="XuLy" asp-route-id="@pa.Id" class="btn btn-sm btn-outline-primary">Xử lý</a></td>
+        </tr>
+    }
+    </tbody>
+</table>

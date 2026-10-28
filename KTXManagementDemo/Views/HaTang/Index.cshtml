@@ -1,0 +1,231 @@
+@model List<ToaNha>
+@{
+    ViewData["Title"] = "Quản lý Hạ tầng KTX";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-1">🏢 Quản lý hạ tầng ký túc xá</h4>
+        <p class="text-muted small mb-0">Quản lý tòa nhà, tầng, phòng, giường và cập nhật số lượng sinh viên trong phòng</p>
+    </div>
+    <a asp-action="TaoToaNha" class="btn btn-primary">+ Thêm tòa nhà</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Chưa có tòa nhà nào. Nhấn "+ Thêm tòa nhà" để bắt đầu thiết lập hạ tầng ký túc xá.</div>
+}
+
+@foreach (var toa in Model)
+{
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+            <div>
+                <b class="fs-5">🏢 @toa.TenToaNha</b>
+                @if (!string.IsNullOrEmpty(toa.MoTa))
+                {
+                    <span class="text-light opacity-75 small ms-2">— @toa.MoTa</span>
+                }
+            </div>
+            <a asp-action="TaoTang" asp-route-toaNhaId="@toa.Id" class="btn btn-sm btn-outline-light">+ Thêm tầng</a>
+        </div>
+        <div class="card-body">
+            @if (!toa.DanhSachTang.Any())
+            {
+                <div class="text-muted small p-2">Tòa nhà này chưa có tầng nào.</div>
+            }
+
+            @foreach (var tang in toa.DanhSachTang.OrderBy(t => t.SoThuTu))
+            {
+                var tongGiuongTang = tang.DanhSachPhong.Sum(p => p.DanhSachGiuong.Count);
+                var tongSvTang = tang.DanhSachPhong.Sum(p => p.SoSinhVienHienTai);
+
+                <div class="mb-4 ps-3 border-start border-4 border-primary bg-light-subtle p-3 rounded">
+                    <!-- Floor Header -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-2 mb-3 border-bottom">
+                        <div>
+                            <span class="fs-5 fw-bold text-primary">Tầng @tang.SoThuTu</span>
+                            <span class="badge bg-secondary ms-2">@tang.DanhSachPhong.Count phòng</span>
+                            <span class="badge bg-info ms-1">@tongSvTang SV đang ở / @tongGiuongTang giường</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <a asp-action="TaoPhong" asp-route-tangId="@tang.Id" class="btn btn-sm btn-success">+ Thêm phòng</a>
+                            <a asp-action="SuaTang" asp-route-id="@tang.Id" class="btn btn-sm btn-outline-warning">✏️ Sửa tầng</a>
+                            <form asp-action="XoaTang" asp-route-id="@tang.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa Tầng @tang.SoThuTu (các phòng và giường trống trong tầng sẽ bị xóa)?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">🗑️ Xóa tầng</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Room Grid -->
+                    <div class="row g-3">
+                        @if (!tang.DanhSachPhong.Any())
+                        {
+                            <div class="col-12 text-muted small">Tầng này chưa có phòng nào. Nhấn "+ Thêm phòng" để tạo mới.</div>
+                        }
+
+                        @foreach (var phong in tang.DanhSachPhong)
+                        {
+                            var soSv = phong.SoSinhVienHienTai;
+                            var phanTramLapDay = phong.SucChua > 0 ? Math.Min(100, (int)Math.Round(soSv * 100.0 / phong.SucChua)) : 0;
+                            var badgeClass = phong.TrangThai == TrangThaiPhong.Trong ? "success"
+                                           : phong.TrangThai == TrangThaiPhong.Day ? "danger"
+                                           : phong.TrangThai == TrangThaiPhong.BaoTri ? "secondary"
+                                           : "warning";
+
+                            <div class="col-lg-4 col-md-6">
+                                <div class="card h-100 border shadow-none">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                        <b class="fs-6">🚪 Phòng @phong.SoPhong</b>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="badge text-bg-@badgeClass">@phong.TrangThai</span>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    ⋮
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                    <li>
+                                                        <a asp-action="SuaPhong" asp-route-id="@phong.Id" class="dropdown-item">✏️ Sửa thông tin phòng</a>
+                                                    </li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#collapseCapNhatSV-@phong.Id">
+                                                            👥 Cập nhật số sinh viên
+                                                        </button>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider" /></li>
+                                                    <li>
+                                                        <form asp-action="XoaPhong" asp-route-id="@phong.Id" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa phòng @phong.SoPhong và tất cả giường trống bên trong?');">
+                                                            <button type="submit" class="dropdown-item text-danger">🗑️ Xóa phòng</button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-body py-2">
+                                        <!-- Room info and student count -->
+                                        <div class="d-flex justify-content-between small text-muted mb-1">
+                                            <span>Giá: <b>@phong.DonGiaThang.ToString("N0")đ</b>/tháng</span>
+                                            <span>Trống: <b>@phong.SoGiuongTrong</b>/@phong.DanhSachGiuong.Count giường</span>
+                                        </div>
+
+                                        <div class="p-2 mb-2 bg-light rounded border">
+                                            <div class="d-flex justify-content-between align-items-center small mb-1">
+                                                <span class="fw-bold">👥 Số sinh viên trong phòng:</span>
+                                                <span class="badge @(soSv >= phong.SucChua ? "bg-danger" : "bg-primary")">
+                                                    @soSv / @phong.SucChua sinh viên
+                                                </span>
+                                            </div>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar @(soSv >= phong.SucChua ? "bg-danger" : "bg-primary")" role="progressbar" style="width: @(phanTramLapDay)%" aria-valuenow="@soSv" aria-valuemin="0" aria-valuemax="@phong.SucChua"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quick update student count (Capacity) collapse form -->
+                                        <div class="collapse mb-2" id="collapseCapNhatSV-@phong.Id">
+                                            <div class="card card-body bg-light-subtle p-2 border">
+                                                <form asp-action="CapNhatSoSinhVien" method="post">
+                                                    <input type="hidden" name="phongId" value="@phong.Id" />
+                                                    <label class="form-label small fw-bold mb-1">Cập nhật số SV tối đa (Sức chứa):</label>
+                                                    <div class="input-group input-group-sm mb-1">
+                                                        <input type="number" name="sucChuaMoi" class="form-control" value="@phong.SucChua" min="@Math.Max(1, soSv)" max="20" required />
+                                                        <button type="submit" class="btn btn-primary">Lưu</button>
+                                                    </div>
+                                                    <div class="form-check form-switch small">
+                                                        <input class="form-check-input" type="checkbox" name="dongBoGiuong" value="true" checked id="dongBo-@phong.Id" />
+                                                        <label class="form-check-label" for="dongBo-@phong.Id">Tự động đồng bộ số giường</label>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bed List -->
+                                        <div class="small fw-bold text-secondary mb-1 d-flex justify-content-between align-items-center">
+                                            <span>Danh sách giường:</span>
+                                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapseThemGiuong-@phong.Id">
+                                                + Thêm giường
+                                            </button>
+                                        </div>
+
+                                        <!-- Quick Add Bed Form -->
+                                        <div class="collapse mb-2" id="collapseThemGiuong-@phong.Id">
+                                            <form asp-action="ThemGiuong" method="post" class="input-group input-group-sm">
+                                                <input type="hidden" name="phongId" value="@phong.Id" />
+                                                <input type="text" name="soGiuong" class="form-control" placeholder="Mã giường (VD: @phong.SoPhong-@((phong.DanhSachGiuong.Count + 1).ToString("00")))" />
+                                                <button type="submit" class="btn btn-success">Thêm</button>
+                                            </form>
+                                        </div>
+
+                                        <ul class="list-group list-group-flush small mb-2 border rounded">
+                                            @if (!phong.DanhSachGiuong.Any())
+                                            {
+                                                <li class="list-group-item text-muted py-1">Chưa có giường nào</li>
+                                            }
+                                            @foreach (var g in phong.DanhSachGiuong)
+                                            {
+                                                var coSv = g.TrangThai == TrangThaiGiuong.DaCoNguoi || g.SinhVienId != null;
+                                                <li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2">
+                                                    <div>
+                                                        <b>@g.SoGiuong</b>:
+                                                        @if (coSv)
+                                                        {
+                                                            <span class="text-danger fw-semibold">
+                                                                @g.SinhVien?.MSSV
+                                                                @if (g.SinhVien?.TaiKhoan != null)
+                                                                {
+                                                                    <span class="text-muted small">(@g.SinhVien.TaiKhoan.HoTen)</span>
+                                                                }
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-success">Trống</span>
+                                                        }
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <a asp-action="SuaGiuong" asp-route-id="@g.Id" class="btn btn-xs btn-outline-warning py-0 px-1" title="Sửa giường" style="font-size: 0.75rem;">
+                                                            Sửa
+                                                        </a>
+                                                        @if (!coSv)
+                                                        {
+                                                            <form asp-action="XoaGiuong" asp-route-id="@g.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa giường @g.SoGiuong?');">
+                                                                <button type="submit" class="btn btn-xs btn-outline-danger py-0 px-1" title="Xóa giường" style="font-size: 0.75rem;">
+                                                                    Xóa
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                    </div>
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <!-- Update status form -->
+                                        <form asp-action="DoiTrangThaiPhong" method="post" class="d-flex gap-1 mt-2">
+                                            <input type="hidden" name="phongId" value="@phong.Id" />
+                                            <select name="trangThai" class="form-select form-select-sm">
+                                                @foreach (var tt in Enum.GetValues<TrangThaiPhong>())
+                                                {
+                                                    <option value="@tt" selected="@(tt == phong.TrangThai ? "selected" : null)">@tt</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-outline-dark text-nowrap">Đổi trạng thái</button>
+                                        </form>
+                                    </div>
+                                    <div class="card-footer bg-light py-1 d-flex justify-content-between">
+                                        <a asp-action="SuaPhong" asp-route-id="@phong.Id" class="btn btn-link btn-sm p-0 text-decoration-none">
+                                            ✏️ Chi tiết &amp; Sửa
+                                        </a>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-primary" data-bs-toggle="collapse" data-bs-target="#collapseCapNhatSV-@phong.Id">
+                                            👥 Đổi số SV
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

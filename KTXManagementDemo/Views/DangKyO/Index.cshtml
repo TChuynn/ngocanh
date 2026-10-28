@@ -1,0 +1,43 @@
+@model List<DangKyO>
+@{ ViewData["Title"] = "Đăng ký ở"; }
+<h4 class="mb-3">🛏️ Danh sách yêu cầu đăng ký ở / xếp phòng</h4>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>Sinh viên</th><th>Ngày đăng ký</th><th>Phòng hiện tại</th><th>Trạng thái</th><th>Ghi chú</th><th style="width:280px">Thao tác</th></tr>
+    </thead>
+    <tbody>
+    @foreach (var dk in Model)
+    {
+        <tr>
+            <td>@dk.SinhVien?.MSSV - @dk.SinhVien?.TaiKhoan?.HoTen</td>
+            <td>@dk.NgayDangKy.ToString("dd/MM/yyyy")</td>
+            <td>@dk.Phong?.SoPhong @(dk.Giuong != null ? $"({dk.Giuong.SoGiuong})" : "")</td>
+            <td><span class="badge text-bg-info">@dk.TrangThai</span></td>
+            <td class="small">@dk.GhiChu</td>
+            <td>
+                @if (dk.TrangThai == TrangThaiDangKyO.ChoDuyet)
+                {
+                    <a asp-action="XepPhong" asp-route-id="@dk.Id" class="btn btn-sm btn-primary">Xếp phòng (AI gợi ý)</a>
+                    <form asp-action="TuChoi" method="post" class="d-inline" onsubmit="return confirm('Từ chối yêu cầu này?');">
+                        <input type="hidden" name="id" value="@dk.Id" />
+                        <input type="hidden" name="lyDo" value="Không đủ điều kiện/hết chỗ" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
+                    </form>
+                }
+                else if (dk.TrangThai == TrangThaiDangKyO.DangO)
+                {
+                    <a asp-action="ChuyenPhong" asp-route-id="@dk.Id" class="btn btn-sm btn-outline-warning">Chuyển phòng</a>
+                }
+                else if (dk.TrangThai == TrangThaiDangKyO.DangChoTraPhong)
+                {
+                    <form asp-action="XacNhanTraPhong" method="post" class="d-inline" onsubmit="return confirm('Xác nhận trả phòng? Hệ thống sẽ kiểm tra công nợ trước.');">
+                        <input type="hidden" name="id" value="@dk.Id" />
+                        <button type="submit" class="btn btn-sm btn-success">Xác nhận trả phòng</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

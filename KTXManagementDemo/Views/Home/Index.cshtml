@@ -1,0 +1,114 @@
+@{
+    ViewData["Title"] = "Trang chủ";
+    var vaiTro = ViewBag.VaiTro as string;
+}
+
+<h3 class="mb-3">Xin chào, @ViewBag.HoTen 👋</h3>
+
+@if (vaiTro == "QuanLyKTX")
+{
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-bg-primary">
+                <div class="card-body">
+                    <div class="fs-1">@ViewBag.SoPhong</div>
+                    <div>Tổng số phòng</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-success">
+                <div class="card-body">
+                    <div class="fs-1">@ViewBag.SoGiuongTrong</div>
+                    <div>Giường còn trống</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-warning">
+                <div class="card-body">
+                    <div class="fs-1">@ViewBag.ChoDuyet</div>
+                    <div>Yêu cầu chờ duyệt</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-danger">
+                <div class="card-body">
+                    <div class="fs-1">@ViewBag.PhanAnhMoi</div>
+                    <div>Phản ánh mới</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a asp-controller="DangKyO" asp-action="Index" class="btn btn-outline-primary me-2">Xử lý đăng ký ở</a>
+        <a asp-controller="PhanAnh" asp-action="Index" class="btn btn-outline-danger me-2">Xử lý phản ánh</a>
+        <a asp-controller="ThongKe" asp-action="Index" class="btn btn-outline-dark">Xem thống kê chi tiết</a>
+    </div>
+}
+else if (vaiTro == "KeToan")
+{
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-bg-danger">
+                <div class="card-body">
+                    <div class="fs-2">@(((decimal)ViewBag.TongCongNo).ToString("N0"))đ</div>
+                    <div>Tổng công nợ hiện tại</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-bg-warning">
+                <div class="card-body">
+                    <div class="fs-1">@ViewBag.SoSinhVienConNo</div>
+                    <div>Sinh viên còn nợ</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-bg-secondary">
+                <div class="card-body">
+                    <div class="fs-1">@ViewBag.PhieuChuaThanhToan</div>
+                    <div>Phiếu phí chưa thanh toán đủ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a asp-controller="PhiCongNo" asp-action="TaoPhieuPhi" class="btn btn-outline-primary me-2">Tạo phiếu phí</a>
+        <a asp-controller="PhiCongNo" asp-action="Index" class="btn btn-outline-dark">Danh sách phiếu phí</a>
+    </div>
+}
+else if (vaiTro == "SinhVien")
+{
+    var sv = ViewBag.SinhVien as KTXManagement.Demo.Models.SinhVien;
+    var phongHienTai = ViewBag.PhongHienTai as KTXManagement.Demo.Models.DangKyO;
+    <div class="card">
+        <div class="card-body">
+            <h5>Thông tin của bạn</h5>
+            <p>MSSV: <b>@sv?.MSSV</b> — Lớp: @sv?.Lop — Khoa: @sv?.Khoa</p>
+            <p>
+                Trạng thái ở KTX: <span class="badge text-bg-info">@sv?.TrangThaiO</span>
+            </p>
+            @if (phongHienTai?.Phong != null)
+            {
+                <p>Đang ở phòng <b>@phongHienTai.Phong.SoPhong</b>, giường <b>@phongHienTai.Giuong?.SoGiuong</b>.</p>
+            }
+            else
+            {
+                <p class="text-muted">Bạn chưa được xếp phòng. Vào mục "Đăng ký ở của tôi" để gửi yêu cầu.</p>
+            }
+            <p>Công nợ hiện tại: <b class="@(sv?.CongNo?.TongNoHienTai > 0 ? "text-danger" : "text-success")">@((sv?.CongNo?.TongNoHienTai ?? 0).ToString("N0"))đ</b></p>
+        </div>
+    </div>
+    <div class="mt-3">
+        <a asp-controller="DangKyO" asp-action="CuaToi" class="btn btn-outline-primary me-2">Đăng ký ở của tôi</a>
+        <a asp-controller="PhiCongNo" asp-action="CuaToi" class="btn btn-outline-warning me-2">Phí phòng của tôi</a>
+        <a asp-controller="PhanAnh" asp-action="Gui" class="btn btn-outline-danger">Gửi phản ánh/sự cố</a>
+    </div>
+}
+
+<div class="alert alert-light border mt-4">
+    💬 Bạn có thể bấm vào biểu tượng chat góc dưới bên phải để hỏi <b>Trợ lý AI</b> về hệ thống KTX bất cứ lúc nào.
+</div>

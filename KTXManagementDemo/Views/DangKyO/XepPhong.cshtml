@@ -1,0 +1,33 @@
+@model XepPhongViewModel
+@{ ViewData["Title"] = "Xếp phòng"; }
+<h4>🤖 Xếp phòng cho sinh viên @Model.YeuCau?.SinhVien?.MSSV</h4>
+
+<div class="alert alert-info">
+    <b>Gợi ý từ AI:</b>
+    <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">@Model.GoiYAI</pre>
+</div>
+
+<h5>Chọn giường để xếp phòng</h5>
+<div class="row">
+@foreach (var phong in Model.DanhSachPhongTrong)
+{
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6>Phòng @phong.SoPhong <span class="badge text-bg-secondary">@phong.SoGiuongTrong trống</span></h6>
+                <div class="small text-muted mb-2">Giá: @phong.DonGiaThang.ToString("N0")đ/tháng</div>
+                @foreach (var giuong in phong.DanhSachGiuong.Where(g => g.TrangThai == TrangThaiGiuong.Trong))
+                {
+                    <form asp-action="XacNhanXepPhong" method="post" class="d-inline">
+                        <input type="hidden" name="yeuCauId" value="@Model.YeuCau!.Id" />
+                        <input type="hidden" name="giuongId" value="@giuong.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-primary mb-1">Xếp giường @giuong.SoGiuong</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+}
+</div>
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-2">Quay lại danh sách</a>
