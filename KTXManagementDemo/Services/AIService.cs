@@ -2,21 +2,18 @@ using System.Text;
 using System.Text.Json;
 using KTXManagement.Demo.Data;
 using KTXManagement.Demo.Models;
+using KTXManagement.Demo.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KTXManagement.Demo.Services
 {
     /// <summary>
-    /// AIService: xử lý toàn bộ nghiệp vụ AI của hệ thống KTX AI:
-    ///  - Chatbot hỏi-đáp giới hạn trong phạm vi dữ liệu dự án
-    ///  - Gợi ý xếp phòng khi Quản lý KTX duyệt yêu cầu đăng ký ở (UC004)
-    ///  - Tóm tắt xu hướng phản ánh/sự cố cho báo cáo thống kê (UC007)
-    ///
-    /// Nếu appsettings["AIConfig:ApiKey"] có giá trị, service sẽ gọi API Anthropic thật.
-    /// Nếu không, tự động dùng bộ trả lời rule-based dựa trên dữ liệu đã seed
-    /// để bản demo luôn chạy được mà không cần Internet / API key.
+    /// AIService: xử lý các nghiệp vụ AI của hệ thống KTX:
+    ///  1. AI tóm tắt phản ánh/sự cố theo nhóm vấn đề cho Quản lý KTX (UC006 / UC007)
+    ///  2. AI gợi ý xếp phòng dựa trên chỗ trống và tiêu chí cơ bản cho Sinh viên (UC004)
+    ///  3. Hỗ trợ Quản lý KTX xem gợi ý khi duyệt xếp phòng
     /// </summary>
     public class AIService : IAIService
     {
@@ -37,99 +34,498 @@ namespace KTXManagement.Demo.Services
         private string Model => _config["AIConfig:Model"] ?? "claude-sonnet-4-6";
         private string ApiUrl => _config["AIConfig:ApiUrl"] ?? "https://api.anthropic.com/v1/messages";
 
-        // ==================== 1. CHATBOT HỎI-ĐÁP ====================
+        // ==================== 1. AI TÓM TẮT PHẢN ÁNH/SỰ CỐ THEO NHÓM VẤN ĐỀ ====================
 
-        public async Task<string> TraLoiAsync(string cauHoi, TaiKhoan? nguoiDung)
+        public async Task<AITomTatPhanAnhViewModel> TomTatPhanAnhTheoNhomAsync(List<PhanAnhSuCo> danhSachPhanAnh)
         {
-            if (string.IsNullOrWhiteSpace(cauHoi))
-                return "Bạn vui lòng nhập câu hỏi để mình hỗ trợ nhé.";
+            var vm = new AITomTatPhanAnhViewModel
+            {
+                TongSoPhanAnh = danhSachPhanAnh.Count,
+                TongPhanAnhMoi = danhSachPhanAnh.Count(p => p.TrangThai == TrangThaiPhanAnh.Moi),
+                TongDangXuLy = danhSachPhanAnh.Count(p => p.TrangThai == TrangThaiPhanAnh.DangXuLy),
+                TongDaXuLy = danhSachPhanAnh.Count(p => p.TrangThai == TrangThaiPhanAnh.DaXuLy),
+                ThoiGianPhanTich = DateTime.Now
+            };
 
-            // Bước 1: các câu hỏi "cá nhân" (công nợ của tôi, phòng của tôi...) luôn được
-            // trả lời trực tiếp từ dữ liệu thật của đúng người hỏi, không giao cho AI suy đoán.
-            var traLoiCaNhan = await TraLoiCauHoiCaNhanAsync(cauHoi, nguoiDung);
-            if (traLoiCaNhan != null) return traLoiCaNhan;
+            if (!danhSachPhanAnh.Any())
+            {
+                vm.NhanXetTongQuanAI = "Hiện chưa có phản ánh hay sự cố nào được ghi nhận trong hệ thống.";
+                return vm;
+            }
 
-            // Bước 2: câu hỏi chung về hệ thống -> build ngữ cảnh dữ liệu + gọi LLM (nếu có key)
-            var systemPrompt = await XayDungSystemPromptAsync(nguoiDung);
+            // Định nghĩa các nhóm vấn đề
+            var nhomDien = new PhanAnhNhomVanDe
+            {
+                TenNhom = "Điện & Thiết bị chiếu sáng",
+                Icon = "⚡",
+                MauSac = "warning",
+                MucDoUuTien = "Cao",
+                MucDoUuTienBadge = "danger"
+            };
 
+            var nhomNuoc = new PhanAnhNhomVanDe
+            {
+                TenNhom = "Nước & Thiết bị vệ sinh",
+                Icon = "💧",
+                MauSac = "info",
+                MucDoUuTien = "Khẩn cấp",
+                MucDoUuTienBadge = "danger"
+            };
+
+            var nhomCoSoVatChat = new PhanAnhNhomVanDe
+            {
+                TenNhom = "Cơ sở vật chất & Nội thất",
+                Icon = "🪑",
+                MauSac = "primary",
+                MucDoUuTien = "Trung bình",
+                MucDoUuTienBadge = "warning"
+            };
+
+            var nhomAnNinh = new PhanAnhNhomVanDe
+            {
+                TenNhom = "An ninh & Vi phạm nội quy",
+                Icon = "🚨",
+                MauSac = "danger",
+                MucDoUuTien = "Cao",
+                MucDoUuTienBadge = "danger"
+            };
+
+            var nhomKhac = new PhanAnhNhomVanDe
+            {
+                TenNhom = "Mạng Internet & Tiện ích chung",
+                Icon = "🌐",
+                MauSac = "secondary",
+                MucDoUuTien = "Thấp",
+                MucDoUuTienBadge = "info"
+            };
+
+            // Phân loại từng phản ánh vào nhóm tương ứng bằng phân tích ngữ nghĩa từ khóa
+            foreach (var pa in danhSachPhanAnh)
+            {
+                var text = (pa.TieuDe + " " + pa.NoiDung).ToLower();
+
+                if (pa.LoaiPhanAnh == LoaiPhanAnh.ViPhamNoiQuy ||
+                    text.Contains("ồn") || text.Contains("nhạc") || text.Contains("hút thuốc") ||
+                    text.Contains("người lạ") || text.Contains("trộm") || text.Contains("mất cắp") ||
+                    text.Contains("đánh bài") || text.Contains("nhậu") || text.Contains("23h") ||
+                    text.Contains("nội quy") || text.Contains("an ninh"))
+                {
+                    nhomAnNinh.DanhSachPhanAnh.Add(pa);
+                }
+                else if (text.Contains("nước") || text.Contains("vòi") || text.Contains("rò rỉ") ||
+                         text.Contains("tắc") || text.Contains("bồn cầu") || text.Contains("thấm") ||
+                         text.Contains("ngập") || text.Contains("vệ sinh") || text.Contains("thoát nước"))
+                {
+                    nhomNuoc.DanhSachPhanAnh.Add(pa);
+                }
+                else if (text.Contains("điện") || text.Contains("bóng đèn") || text.Contains("đèn") ||
+                         text.Contains("ổ cắm") || text.Contains("chập") || text.Contains("công tắc") ||
+                         text.Contains("quạt") || text.Contains("nóng lạnh") || text.Contains("aptomat"))
+                {
+                    nhomDien.DanhSachPhanAnh.Add(pa);
+                }
+                else if (text.Contains("wifi") || text.Contains("mạng") || text.Contains("internet") ||
+                         text.Contains("rác") || text.Contains("thang máy") || text.Contains("máy giặt"))
+                {
+                    nhomKhac.DanhSachPhanAnh.Add(pa);
+                }
+                else
+                {
+                    nhomCoSoVatChat.DanhSachPhanAnh.Add(pa);
+                }
+            }
+
+            var tatCaNhom = new List<PhanAnhNhomVanDe> { nhomNuoc, nhomDien, nhomCoSoVatChat, nhomAnNinh, nhomKhac };
+
+            // Tính toán số liệu và sinh nhận xét AI cho từng nhóm có dữ liệu
+            foreach (var nhom in tatCaNhom)
+            {
+                nhom.SoLuong = nhom.DanhSachPhanAnh.Count;
+                if (nhom.SoLuong == 0) continue;
+
+                nhom.TyLePhanTram = Math.Round(nhom.SoLuong * 100.0 / vm.TongSoPhanAnh, 1);
+                nhom.SoLuongMoi = nhom.DanhSachPhanAnh.Count(p => p.TrangThai == TrangThaiPhanAnh.Moi);
+                nhom.SoLuongDangXuLy = nhom.DanhSachPhanAnh.Count(p => p.TrangThai == TrangThaiPhanAnh.DangXuLy);
+                nhom.SoLuongDaXuLy = nhom.DanhSachPhanAnh.Count(p => p.TrangThai == TrangThaiPhanAnh.DaXuLy);
+
+                nhom.DanhSachPhongLienQuan = nhom.DanhSachPhanAnh
+                    .Where(p => p.Phong != null)
+                    .Select(p => p.Phong!.SoPhong)
+                    .Distinct()
+                    .ToList();
+
+                SinhNhanXetVaDeXuatChoNhom(nhom);
+                vm.CacNhomVanDe.Add(nhom);
+            }
+
+            // Sắp xếp các nhóm theo mức độ ưu tiên & số lượng phản ánh mới
+            vm.CacNhomVanDe = vm.CacNhomVanDe
+                .OrderByDescending(n => n.SoLuongMoi)
+                .ThenByDescending(n => n.SoLuong)
+                .ToList();
+
+            // Sinh nhận xét tổng quan toàn hệ thống
+            var sbTongQuan = new StringBuilder();
+            sbTongQuan.AppendLine($"Hệ thống ghi nhận tổng cộng {vm.TongSoPhanAnh} phản ánh/sự cố, hiện có {vm.TongPhanAnhMoi} vụ việc mới và {vm.TongDangXuLy} vụ việc đang trong quá trình giải quyết.");
+
+            var nhomNhieuNhat = vm.CacNhomVanDe.FirstOrDefault();
+            if (nhomNhieuNhat != null)
+            {
+                sbTongQuan.AppendLine($"Nhóm vấn đề chiếm tỷ lệ cao nhất là \"{nhomNhieuNhat.TenNhom}\" với {nhomNhieuNhat.SoLuong} vụ ({nhomNhieuNhat.TyLePhanTram}%).");
+            }
+
+            if (vm.TongPhanAnhMoi > 0)
+            {
+                sbTongQuan.AppendLine("Đề nghị Ban quản lý ký túc xá phân công bộ phận kỹ thuật và giám sát xử lý dứt điểm các sự cố còn tồn đọng để đảm bảo sinh hoạt ổn định cho sinh viên.");
+            }
+            else
+            {
+                sbTongQuan.AppendLine("Tiến độ xử lý phản ánh của Ban quản lý hiện tại đạt hiệu quả tốt, không còn tồn đọng sự cố mới chưa tiếp nhận.");
+            }
+
+            vm.NhanXetTongQuanAI = sbTongQuan.ToString();
+
+            // Sinh danh sách khuyến nghị hành động ưu tiên
+            vm.KhuyenNghiUuTienAI = SinhKhuyenNghiUuTien(vm.CacNhomVanDe);
+
+            // Nếu có API Key, thử làm phong phú thêm nhận xét bằng LLM
             if (!string.IsNullOrWhiteSpace(ApiKey))
             {
-                var ketQua = await GoiLLMAsync(systemPrompt, cauHoi);
-                if (ketQua != null) return ketQua;
+                try
+                {
+                    var tomTatQuick = string.Join("\n", vm.CacNhomVanDe.Select(n => $"- {n.TenNhom}: {n.SoLuong} vụ ({n.SoLuongMoi} mới, {n.SoLuongDangXuLy} đang xử lý). Phòng liên quan: {string.Join(", ", n.DanhSachPhongLienQuan)}"));
+                    var prompt = $"Bạn là trợ lý Quản lý ký túc xá. Dựa vào tóm tắt sau:\n{tomTatQuick}\nHãy viết 1 đoạn nhận xét chiến lược ngắn gọn (khoảng 3-4 câu) bằng tiếng Việt đưa ra đánh giá rủi ro và chỉ đạo hành động cụ thể cho ban quản lý KTX.";
+                    var llmResult = await GoiLLMAsync("Bạn là trợ lý quản lý KTX.", prompt);
+                    if (!string.IsNullOrWhiteSpace(llmResult))
+                    {
+                        vm.NhanXetTongQuanAI += "\n\n[Đánh giá chuyên sâu từ AI]: " + llmResult;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Không thể bổ sung LLM vào tóm tắt phản ánh.");
+                }
             }
 
-            // Bước 3: fallback rule-based nếu không có API key hoặc gọi API lỗi
-            return TraLoiRuleBased(cauHoi, nguoiDung);
+            return vm;
         }
 
-        private async Task<string?> TraLoiCauHoiCaNhanAsync(string cauHoi, TaiKhoan? nguoiDung)
+        private static void SinhNhanXetVaDeXuatChoNhom(PhanAnhNhomVanDe nhom)
         {
-            if (nguoiDung == null || nguoiDung.VaiTro != VaiTro.SinhVien) return null;
-            var sv = await _db.SinhViens.Include(s => s.CongNo)
-                .FirstOrDefaultAsync(s => s.TaiKhoanId == nguoiDung.Id);
-            if (sv == null) return null;
+            var phongStr = nhom.DanhSachPhongLienQuan.Any()
+                ? "tại các phòng: " + string.Join(", ", nhom.DanhSachPhongLienQuan)
+                : "tại các khu vực sinh hoạt chung";
 
-            var cauHoiLower = cauHoi.ToLower();
-
-            if (cauHoiLower.Contains("công nợ") || cauHoiLower.Contains("no ") || cauHoiLower.Contains("còn nợ"))
+            switch (nhom.TenNhom)
             {
-                var no = sv.CongNo?.TongNoHienTai ?? 0;
-                return no > 0
-                    ? $"Bạn ({sv.MSSV}) hiện đang còn nợ {no:N0}đ tiền phòng. Vui lòng liên hệ Kế toán KTX để thanh toán trước hạn nhé."
-                    : $"Bạn ({sv.MSSV}) hiện không có công nợ nào, cảm ơn bạn đã đóng phí đầy đủ!";
-            }
+                case "Nước & Thiết bị vệ sinh":
+                    nhom.TomTatAI = $"Ghi nhận {nhom.SoLuong} sự cố về rò rỉ nước, thiết bị vệ sinh {phongStr}. Nguy cơ gây trơn trượt, lãng phí nước và ẩm mốc sàn nhà.";
+                    nhom.DeXuatHanhDongAI = "Điều phối ngay nhân viên kỹ thuật nước kiểm tra van khóa tổng và thay gioăng/vòi rò rỉ trong vòng 12h. Kiểm tra cống thoát sàn chống ngập.";
+                    break;
 
-            if (cauHoiLower.Contains("phòng của tôi") || cauHoiLower.Contains("đang ở phòng") || cauHoiLower.Contains("giường của tôi"))
-            {
-                var dk = await _db.DangKyOs.Include(d => d.Phong).Include(d => d.Giuong)
-                    .Where(d => d.SinhVienId == sv.Id && (d.TrangThai == TrangThaiDangKyO.DangO))
-                    .FirstOrDefaultAsync();
-                return dk?.Phong != null
-                    ? $"Bạn hiện đang ở phòng {dk.Phong.SoPhong}, giường {dk.Giuong?.SoGiuong}."
-                    : "Bạn hiện chưa được xếp phòng ở KTX. Nếu đã gửi yêu cầu đăng ký ở, vui lòng chờ Quản lý KTX xử lý.";
-            }
+                case "Điện & Thiết bị chiếu sáng":
+                    nhom.TomTatAI = $"Có {nhom.SoLuong} phản ánh hư hỏng đèn chiếu sáng, ổ cắm hoặc thiết bị điện {phongStr}, ảnh hưởng trực tiếp đến việc học tập của sinh viên.";
+                    nhom.DeXuatHanhDongAI = "Phân công thợ điện thay bóng đèn chiếu sáng và đo an toàn điện tải tại các ổ cắm trong ngày. Kiểm tra định kỳ hộp kỹ thuật.";
+                    break;
 
-            if (cauHoiLower.Contains("phản ánh") && (cauHoiLower.Contains("của tôi") || cauHoiLower.Contains("tôi gửi")))
-            {
-                var soLuong = await _db.PhanAnhSuCos.CountAsync(p => p.SinhVienId == sv.Id);
-                var choXuLy = await _db.PhanAnhSuCos.CountAsync(p => p.SinhVienId == sv.Id && p.TrangThai != TrangThaiPhanAnh.DaXuLy && p.TrangThai != TrangThaiPhanAnh.TuChoi);
-                return $"Bạn đã gửi {soLuong} phản ánh/sự cố, trong đó {choXuLy} phản ánh đang chờ xử lý. Bạn có thể xem chi tiết ở mục \"Phản ánh của tôi\".";
-            }
+                case "Cơ sở vật chất & Nội thất":
+                    nhom.TomTatAI = $"Phát sinh {nhom.SoLuong} phản ánh về khóa cửa, giường, tủ hoặc cơ sở vật chất phòng ở {phongStr}.";
+                    nhom.DeXuatHanhDongAI = "Lên lịch thợ mộc/cơ khí sửa chữa ổ khóa và gia cố khung giường trong 24-48h. Nhắc nhở sinh viên giữ gìn tài sản chung.";
+                    break;
 
-            return null;
+                case "An ninh & Vi phạm nội quy":
+                    nhom.TomTatAI = $"Có {nhom.SoLuong} vụ việc liên quan đến tiếng ồn, giờ giới nghiêm hoặc vi phạm nội quy KTX {phongStr}.";
+                    nhom.DeXuatHanhDongAI = "Ban quản lý cần làm việc trực tiếp, lập biên bản nhắc nhở đối với phòng vi phạm; tăng cường tuần tra các tầng sau 23h.";
+                    break;
+
+                default:
+                    nhom.TomTatAI = $"Ghi nhận {nhom.SoLuong} phản ánh liên quan đến kết nối mạng internet hoặc các tiện ích sinh hoạt chung.";
+                    nhom.DeXuatHanhDongAI = "Liên hệ đơn vị cung cấp mạng kiểm tra bộ phát Access Point và nhắc nhở bộ phận vệ sinh dọn dẹp đúng ca trực.";
+                    break;
+            }
         }
 
-        private async Task<string> XayDungSystemPromptAsync(TaiKhoan? nguoiDung)
+        private static List<string> SinhKhuyenNghiUuTien(List<PhanAnhNhomVanDe> cacNhom)
         {
-            var tongPhong = await _db.Phongs.CountAsync();
-            var tongGiuong = await _db.Giuongs.CountAsync();
-            var giuongDaO = await _db.Giuongs.CountAsync(g => g.TrangThai == TrangThaiGiuong.DaCoNguoi);
-            var choDuyet = await _db.DangKyOs.CountAsync(d => d.TrangThai == TrangThaiDangKyO.ChoDuyet);
-            var phanAnhMoi = await _db.PhanAnhSuCos.CountAsync(p => p.TrangThai == TrangThaiPhanAnh.Moi);
+            var list = new List<string>();
 
-            var vaiTro = nguoiDung?.VaiTro.ToString() ?? "Khách";
+            var nhomNuoc = cacNhom.FirstOrDefault(n => n.TenNhom.Contains("Nước"));
+            if (nhomNuoc != null && (nhomNuoc.SoLuongMoi > 0 || nhomNuoc.SoLuongDangXuLy > 0))
+            {
+                list.Add("💧 [ƯU TIÊN 1] Khắc phục ngay sự cố rò rỉ nước để tránh lãng phí nước và nguy cơ chập điện ẩm mốc.");
+            }
+
+            var nhomDien = cacNhom.FirstOrDefault(n => n.TenNhom.Contains("Điện"));
+            if (nhomDien != null && (nhomDien.SoLuongMoi > 0 || nhomDien.SoLuongDangXuLy > 0))
+            {
+                list.Add("⚡ [ƯU TIÊN 2] Thay thế bóng đèn và kiểm tra an toàn điện khu vực học tập của sinh viên trong ngày.");
+            }
+
+            var nhomAnNinh = cacNhom.FirstOrDefault(n => n.TenNhom.Contains("An ninh"));
+            if (nhomAnNinh != null && nhomAnNinh.SoLuongMoi > 0)
+            {
+                list.Add("🚨 [AN NINH] Tăng cường kiểm tra phòng và nhắc nhở sinh viên giữ trật tự sau 23h theo nội quy.");
+            }
+
+            if (!list.Any())
+            {
+                list.Add("✅ Các sự cố trọng yếu đều đã được xử lý hoặc kiểm soát tốt. Duy trì kiểm tra bảo dưỡng định kỳ hàng tuần.");
+            }
+
+            return list;
+        }
+
+        public async Task<string> TomTatPhanAnhAsync(List<PhanAnhSuCo> danhSachPhanAnh)
+        {
+            var vm = await TomTatPhanAnhTheoNhomAsync(danhSachPhanAnh);
+            var sb = new StringBuilder();
+            sb.AppendLine(vm.NhanXetTongQuanAI);
+            sb.AppendLine();
+            sb.AppendLine("Phân bố theo nhóm vấn đề:");
+            foreach (var n in vm.CacNhomVanDe)
+            {
+                sb.AppendLine($"- {n.Icon} {n.TenNhom}: {n.SoLuong} sự cố ({n.TyLePhanTram}%) - Trạng thái: {n.SoLuongMoi} mới, {n.SoLuongDangXuLy} đang xử lý, {n.SoLuongDaXuLy} đã xong.");
+            }
+            sb.AppendLine();
+            sb.AppendLine("Hành động trọng tâm:");
+            foreach (var kn in vm.KhuyenNghiUuTienAI)
+            {
+                sb.AppendLine(kn);
+            }
+            return sb.ToString();
+        }
+
+        // ==================== 2. AI GỢI Ý XẾP PHÒNG CHO SINH VIÊN (UC004) ====================
+
+        public async Task<KetQuaGoiYPhongViewModel> GoiYPhongChoSinhVienAsync(SinhVien sv, TieuChiGoiYPhongViewModel tieuChi)
+        {
+            var ketQua = new KetQuaGoiYPhongViewModel
+            {
+                TieuChi = tieuChi
+            };
+
+            // Lấy tất cả phòng còn giường trống và không ở trạng thái bảo trì
+            var danhSachPhong = await _db.Phongs
+                .Include(p => p.Tang)
+                    .ThenInclude(t => t!.ToaNha)
+                .Include(p => p.DanhSachGiuong)
+                    .ThenInclude(g => g.SinhVien)
+                .Where(p => p.TrangThai != TrangThaiPhong.BaoTri)
+                .ToListAsync();
+
+            var phongConCho = danhSachPhong.Where(p => p.SoGiuongTrong > 0).ToList();
+            if (!phongConCho.Any())
+            {
+                ketQua.NhanXetTongQuatAI = "Rất tiếc! Hiện tại ký túc xá đã hết giường trống hoặc các phòng đang trong diện bảo trì. Bạn vui lòng liên hệ Ban quản lý KTX để được hỗ trợ.";
+                return ketQua;
+            }
+
+            var danhSachDanhGia = new List<PhongGoiYItem>();
+
+            foreach (var p in phongConCho)
+            {
+                var sinhVienTrongPhong = p.DanhSachGiuong
+                    .Where(g => g.SinhVien != null)
+                    .Select(g => g.SinhVien!)
+                    .ToList();
+
+                // RÀNG BUỘC CỨNG: Kiểm tra giới tính
+                // Nếu phòng đã có người, tất cả người trong phòng phải CÙNG giới tính với sinh viên
+                if (sinhVienTrongPhong.Any() && sinhVienTrongPhong.Any(s => s.GioiTinh != sv.GioiTinh))
+                {
+                    continue; // Bỏ qua phòng khác giới tính
+                }
+
+                int diem = 60; // Điểm cơ sở khi hợp lệ giới tính và còn chỗ
+                var diemNoiBat = new List<string>();
+
+                // 1. Tiêu chí bạn cùng phòng
+                bool coBanCungLop = sinhVienTrongPhong.Any(s => !string.IsNullOrEmpty(sv.Lop) && s.Lop == sv.Lop);
+                bool coBanCungKhoa = sinhVienTrongPhong.Any(s => !string.IsNullOrEmpty(sv.Khoa) && s.Khoa == sv.Khoa);
+
+                if (coBanCungLop)
+                {
+                    diem += 18;
+                    diemNoiBat.Add($"Có bạn cùng lớp {sv.Lop} đang ở");
+                }
+                else if (coBanCungKhoa)
+                {
+                    diem += 12;
+                    diemNoiBat.Add($"Có bạn cùng khoa {sv.Khoa} đang ở");
+                }
+                else if (!sinhVienTrongPhong.Any())
+                {
+                    diem += 8;
+                    diemNoiBat.Add("Phòng trống 100%, bạn có thể chọn giường đầu tiên");
+                }
+
+                // 2. Tiêu chí tầng
+                int soTang = p.Tang?.SoThuTu ?? 1;
+                if (tieuChi.ViTriTang == "TangThap")
+                {
+                    if (soTang <= 2)
+                    {
+                        diem += 10;
+                        diemNoiBat.Add($"Tầng {soTang} thuận tiện đi lại, không ngại leo cầu thang");
+                    }
+                }
+                else if (tieuChi.ViTriTang == "TangCao")
+                {
+                    if (soTang >= 3)
+                    {
+                        diem += 10;
+                        diemNoiBat.Add($"Tầng {soTang} cao ráo, thoáng mát và yên tĩnh");
+                    }
+                }
+                else
+                {
+                    diem += 5;
+                }
+
+                // 3. Tiêu chí ngân sách
+                if (tieuChi.MucGiaMongMuon == "TietKiem")
+                {
+                    if (p.DonGiaThang <= 700_000)
+                    {
+                        diem += 10;
+                        diemNoiBat.Add($"Mức phí {p.DonGiaThang:N0}đ/tháng tiết kiệm chi phí");
+                    }
+                }
+                else if (tieuChi.MucGiaMongMuon == "TieuChuan")
+                {
+                    if (p.DonGiaThang > 700_000)
+                    {
+                        diem += 10;
+                        diemNoiBat.Add($"Phòng chất lượng cao {p.DonGiaThang:N0}đ/tháng");
+                    }
+                }
+                else
+                {
+                    diem += 5;
+                }
+
+                // 4. Tiêu chí phong cách sống
+                if (tieuChi.PhongCachSong == "YenTinh")
+                {
+                    if (p.SoGiuongTrong >= 2 || p.SucChua <= 4)
+                    {
+                        diem += 8;
+                        diemNoiBat.Add($"Phòng {p.SucChua} người, còn {p.SoGiuongTrong} chỗ trống yên tĩnh");
+                    }
+                }
+                else if (tieuChi.PhongCachSong == "DongVui")
+                {
+                    if (sinhVienTrongPhong.Count >= 2 || p.SucChua >= 6)
+                    {
+                        diem += 8;
+                        diemNoiBat.Add($"Phòng đông vui, dễ giao lưu kết bạn");
+                    }
+                }
+
+                // Chuẩn hóa điểm tối đa 98%
+                diem = Math.Min(98, diem);
+
+                string danhGia = diem >= 90 ? "Phù hợp nhất" : diem >= 80 ? "Rất phù hợp" : "Khá phù hợp";
+                string mauBadge = diem >= 90 ? "success" : diem >= 80 ? "primary" : "info";
+
+                var item = new PhongGoiYItem
+                {
+                    PhongId = p.Id,
+                    SoPhong = p.SoPhong,
+                    TenToaNha = p.Tang?.ToaNha?.TenToaNha ?? "Tòa nhà",
+                    TangSo = soTang,
+                    SucChua = p.SucChua,
+                    SoGiuongTrong = p.SoGiuongTrong,
+                    DonGiaThang = p.DonGiaThang,
+                    DiemPhuHop = diem,
+                    DanhGiaPhuHop = danhGia,
+                    MauBadge = mauBadge,
+                    DiemNoiBat = diemNoiBat,
+                    GiuongTrong = p.DanhSachGiuong
+                        .Where(g => g.TrangThai == TrangThaiGiuong.Trong)
+                        .Select(g => new GiuongGoiYInfo { GiuongId = g.Id, SoGiuong = g.SoGiuong })
+                        .ToList(),
+                    BanCungPhong = sinhVienTrongPhong
+                        .Select(s => $"SV {(s.GioiTinh == GioiTinh.Nam ? "Nam" : "Nữ")} (Khoa {s.Khoa ?? "Đang cập nhật"}, Lớp {s.Lop ?? "..."})")
+                        .ToList(),
+                    NhanXetAI = SinhNhanXetPhong(p, sv, diemNoiBat, diem)
+                };
+
+                danhSachDanhGia.Add(item);
+            }
+
+            // Lấy top các phòng phù hợp nhất
+            ketQua.DanhSachGoiY = danhSachDanhGia
+                .OrderByDescending(x => x.DiemPhuHop)
+                .ThenByDescending(x => x.SoGiuongTrong)
+                .Take(5)
+                .ToList();
+
+            if (!ketQua.DanhSachGoiY.Any())
+            {
+                ketQua.NhanXetTongQuatAI = $"Hiện không còn phòng nào phù hợp với giới tính ({sv.GioiTinh}) hoặc tiêu chí đã chọn. Bạn có thể nới lỏng các tiêu chí (chọn tất cả tầng / tất cả mức giá) để tìm thêm phòng.";
+            }
+            else
+            {
+                var top1 = ketQua.DanhSachGoiY.First();
+                ketQua.NhanXetTongQuatAI = $"AI đã phân tích và tìm thấy {ketQua.DanhSachGoiY.Count} phòng trống phù hợp nhất cho sinh viên {sv.MSSV} ({sv.GioiTinh}, Khoa {sv.Khoa}). Lựa chọn tối ưu nhất là phòng {top1.SoPhong} ({top1.TenToaNha}) với độ phù hợp đạt {top1.DiemPhuHop}%.";
+            }
+
+            return ketQua;
+        }
+
+        private static string SinhNhanXetPhong(Phong phong, SinhVien sv, List<string> diemNoiBat, int diem)
+        {
+            var sb = new StringBuilder();
+            sb.Append($"Phòng {phong.SoPhong} đạt {diem}% độ tương thích: ");
+            if (diemNoiBat.Any())
+            {
+                sb.Append(string.Join(", ", diemNoiBat));
+                sb.Append(". ");
+            }
+            sb.Append($"Đảm bảo quy định phòng ở {sv.GioiTinh}, hiện còn {phong.SoGiuongTrong} giường trống sẵn sàng xếp phòng.");
+            return sb.ToString();
+        }
+
+        // ==================== 3. HỖ TRỢ QUẢN LÝ KTX XẾP PHÒNG (UC004) ====================
+
+        public async Task<string> GoiYPhongAsync(DangKyO yeuCau)
+        {
+            var sv = await _db.SinhViens.FirstOrDefaultAsync(s => s.Id == yeuCau.SinhVienId);
+            if (sv == null) return "Không tìm thấy thông tin sinh viên để gợi ý xếp phòng.";
+
+            var tieuChi = new TieuChiGoiYPhongViewModel
+            {
+                SinhVienId = sv.Id,
+                MSSV = sv.MSSV,
+                HoTen = sv.TaiKhoan?.HoTen ?? sv.MSSV,
+                GioiTinh = sv.GioiTinh,
+                Lop = sv.Lop,
+                Khoa = sv.Khoa,
+                UuTienBanCungPhong = "CungKhoa",
+                MucGiaMongMuon = "TatCa",
+                ViTriTang = "TatCa",
+                PhongCachSong = "CanBang"
+            };
+
+            var ketQua = await GoiYPhongChoSinhVienAsync(sv, tieuChi);
+            if (!ketQua.DanhSachGoiY.Any())
+                return "Hiện không có phòng nào còn giường trống phù hợp giới tính để xếp.";
 
             var sb = new StringBuilder();
-            sb.AppendLine("Bạn là trợ lý AI của \"Hệ thống quản lý ký túc xá có tích hợp AI\".");
-            sb.AppendLine("Bạn CHỈ được trả lời các câu hỏi liên quan tới phạm vi của hệ thống này, bao gồm:");
-            sb.AppendLine("- Quản lý hạ tầng KTX (toà nhà, tầng, phòng, giường)");
-            sb.AppendLine("- Hồ sơ sinh viên nội trú");
-            sb.AppendLine("- Đăng ký ở, xếp phòng, chuyển phòng, trả phòng");
-            sb.AppendLine("- Phí phòng và công nợ");
-            sb.AppendLine("- Phản ánh/sự cố và vi phạm nội quy KTX");
-            sb.AppendLine("- Thống kê công suất, công nợ, phản ánh của KTX");
-            sb.AppendLine();
-            sb.AppendLine("Nếu người dùng hỏi ngoài phạm vi trên, hãy lịch sự từ chối và nhắc họ hỏi đúng chủ đề KTX.");
-            sb.AppendLine("Trả lời ngắn gọn, rõ ràng, bằng tiếng Việt.");
-            sb.AppendLine();
-            sb.AppendLine("Dữ liệu hiện tại của hệ thống (dùng để trả lời các câu hỏi tổng quan, không suy diễn thêm số liệu khác):");
-            sb.AppendLine($"- Tổng số phòng: {tongPhong}; Tổng số giường: {tongGiuong}; Số giường đã có người ở: {giuongDaO}");
-            sb.AppendLine($"- Số yêu cầu đăng ký ở đang chờ duyệt: {choDuyet}");
-            sb.AppendLine($"- Số phản ánh/sự cố mới chưa xử lý: {phanAnhMoi}");
-            sb.AppendLine($"- Vai trò người đang hỏi: {vaiTro}");
+            sb.AppendLine($"AI gợi ý xếp phòng cho sinh viên {sv.MSSV} ({sv.GioiTinh}, lớp {sv.Lop}, khoa {sv.Khoa}):");
+            int i = 1;
+            foreach (var item in ketQua.DanhSachGoiY.Take(3))
+            {
+                sb.AppendLine($"{i}. Phòng {item.SoPhong} ({item.TenToaNha}, Tầng {item.TangSo}) - Độ phù hợp: {item.DiemPhuHop}%");
+                sb.AppendLine($"   → Còn {item.SoGiuongTrong} giường trống. {string.Join("; ", item.DiemNoiBat)}.");
+                i++;
+            }
 
             return sb.ToString();
         }
+
+        // ==================== HÀM GỌI LLM (NẾU CÓ CẤU HÌNH API KEY) ====================
 
         private async Task<string?> GoiLLMAsync(string systemPrompt, string userMessage)
         {
@@ -141,7 +537,7 @@ namespace KTXManagement.Demo.Services
                 var payload = new
                 {
                     model = Model,
-                    max_tokens = 500,
+                    max_tokens = 600,
                     system = systemPrompt,
                     messages = new[] { new { role = "user", content = userMessage } }
                 };
@@ -174,166 +570,9 @@ namespace KTXManagement.Demo.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Lỗi khi gọi AI API, chuyển sang trả lời rule-based.");
+                _logger.LogWarning(ex, "Lỗi khi gọi AI API, sử dụng kết quả phân tích nội bộ.");
                 return null;
             }
         }
-
-        private string TraLoiRuleBased(string cauHoi, TaiKhoan? nguoiDung)
-        {
-            var c = cauHoi.ToLower();
-
-            if (c.Contains("phòng trống") || c.Contains("còn phòng") || c.Contains("còn giường"))
-            {
-                var phongConCho = _db.Phongs.Include(p => p.DanhSachGiuong)
-                    .AsEnumerable()
-                    .Where(p => p.SoGiuongTrong > 0)
-                    .Select(p => $"{p.SoPhong} (còn {p.SoGiuongTrong} giường trống)")
-                    .ToList();
-
-                return phongConCho.Any()
-                    ? "Các phòng hiện còn giường trống: " + string.Join(", ", phongConCho) + "."
-                    : "Hiện tại KTX không còn giường trống, vui lòng liên hệ trực tiếp Quản lý KTX để được tư vấn.";
-            }
-
-            if (c.Contains("đăng ký ở") || c.Contains("đăng ký nội trú") || c.Contains("làm sao để ở ktx"))
-            {
-                return "Để đăng ký ở KTX (UC004): Sinh viên đăng nhập hệ thống, vào mục \"Đăng ký ở\" và gửi yêu cầu. " +
-                       "Quản lý KTX sẽ xem xét, dùng gợi ý AI để xếp phòng/giường phù hợp rồi xác nhận cho bạn.";
-            }
-
-            if (c.Contains("phí") || c.Contains("giá phòng") || c.Contains("bao nhiêu tiền"))
-            {
-                var giaPhong = _db.Phongs.Select(p => p.DonGiaThang).Distinct().OrderBy(x => x).ToList();
-                return giaPhong.Any()
-                    ? "Giá phòng hiện tại dao động từ " + giaPhong.Min().ToString("N0") + "đ đến " + giaPhong.Max().ToString("N0") + "đ/tháng tuỳ loại phòng."
-                    : "Hiện chưa có dữ liệu giá phòng trong hệ thống.";
-            }
-
-            if (c.Contains("phản ánh") || c.Contains("sự cố") || c.Contains("khiếu nại"))
-            {
-                return "Để gửi phản ánh/sự cố hoặc vi phạm nội quy (UC006): Sinh viên vào mục \"Phản ánh/Sự cố\", điền tiêu đề và nội dung. " +
-                       "Quản lý KTX sẽ tiếp nhận, xử lý và phản hồi lại cho bạn.";
-            }
-
-            if (c.Contains("chuyển phòng"))
-            {
-                return "Yêu cầu chuyển phòng được Quản lý KTX xử lý trong mục \"Đăng ký ở\" (UC004): hệ thống sẽ tính lại phí phòng nếu có chênh lệch giữa phòng cũ và phòng mới.";
-            }
-
-            if (c.Contains("trả phòng"))
-            {
-                return "Khi trả phòng (UC004), hệ thống sẽ kiểm tra công nợ (UC005) của bạn trước. " +
-                       "Nếu còn nợ tiền phòng, bạn cần thanh toán hết trước khi được xác nhận trả phòng.";
-            }
-
-            if (c.Contains("xin chào") || c.Contains("hello") || c.Contains("hi "))
-            {
-                return "Xin chào! Mình là trợ lý AI của hệ thống quản lý KTX. Bạn có thể hỏi mình về: đăng ký ở, tình trạng phòng/giường, phí phòng - công nợ, hoặc cách gửi phản ánh/sự cố.";
-            }
-
-            return "Mình chỉ hỗ trợ các câu hỏi liên quan tới quản lý ký túc xá (đăng ký ở, phòng/giường, phí - công nợ, phản ánh/sự cố, thống kê). " +
-                   "Bạn có thể hỏi lại rõ hơn theo các chủ đề này nhé.";
-        }
-
-        // ==================== 2. AI GỢI Ý XẾP PHÒNG (UC004) ====================
-
-        public async Task<string> GoiYPhongAsync(DangKyO yeuCau)
-        {
-            var sv = await _db.SinhViens.FirstOrDefaultAsync(s => s.Id == yeuCau.SinhVienId);
-            if (sv == null) return "Không tìm thấy thông tin sinh viên để gợi ý.";
-
-            // Ưu tiên rule-based (nhanh, ổn định) vì đây là gợi ý nghiệp vụ có ràng buộc rõ (giới tính, sức chứa).
-            var phongPhuHop = await _db.Phongs
-                .Include(p => p.DanhSachGiuong).ThenInclude(g => g.SinhVien)
-                .Where(p => p.TrangThai != TrangThaiPhong.BaoTri)
-                .ToListAsync();
-
-            var ketQua = phongPhuHop
-                .Where(p => p.SoGiuongTrong > 0)
-                // Chỉ gợi ý phòng đang trống hoàn toàn, hoặc phòng đã có người CÙNG giới tính
-                .Where(p => !p.DanhSachGiuong.Any(g => g.SinhVien != null) ||
-                            p.DanhSachGiuong.Where(g => g.SinhVien != null).All(g => g.SinhVien!.GioiTinh == sv.GioiTinh))
-                .Select(p => new
-                {
-                    Phong = p,
-                    CungLop = p.DanhSachGiuong.Any(g => g.SinhVien != null && g.SinhVien.Lop == sv.Lop),
-                    CungKhoa = p.DanhSachGiuong.Any(g => g.SinhVien != null && g.SinhVien.Khoa == sv.Khoa)
-                })
-                .OrderByDescending(x => x.CungLop)
-                .ThenByDescending(x => x.CungKhoa)
-                .ThenByDescending(x => x.Phong.SoGiuongTrong)
-                .Take(3)
-                .ToList();
-
-            if (!ketQua.Any())
-                return "Hiện không có phòng nào còn giường trống phù hợp (cùng giới tính) để gợi ý. Đề nghị xử lý thủ công hoặc chờ có phòng trống.";
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"Gợi ý xếp phòng cho sinh viên {sv.MSSV} ({sv.GioiTinh}, lớp {sv.Lop}):");
-            int stt = 1;
-            foreach (var item in ketQua)
-            {
-                var lyDo = item.CungLop ? "có bạn cùng lớp đang ở" : item.CungKhoa ? "có sinh viên cùng khoa đang ở" : "còn nhiều giường trống, phù hợp giới tính";
-                sb.AppendLine($"{stt}. Phòng {item.Phong.SoPhong} - còn {item.Phong.SoGiuongTrong} giường trống ({lyDo}).");
-                stt++;
-            }
-
-            // Nếu có cấu hình API key, thử xin thêm một câu nhận xét ngắn từ LLM (không bắt buộc)
-            if (!string.IsNullOrWhiteSpace(ApiKey))
-            {
-                var promptThem = await GoiLLMAsync(
-                    "Bạn là trợ lý xếp phòng ký túc xá. Hãy viết 1 câu nhận xét ngắn gọn (dưới 30 từ) bằng tiếng Việt về danh sách gợi ý phòng dưới đây, không lặp lại số liệu.",
-                    sb.ToString());
-                if (promptThem != null) sb.AppendLine().Append("Nhận xét thêm: ").Append(promptThem);
-            }
-
-            return sb.ToString();
-        }
-
-        // ==================== 3. AI TÓM TẮT PHẢN ÁNH (UC007) ====================
-
-        public async Task<string> TomTatPhanAnhAsync(List<PhanAnhSuCo> danhSachPhanAnh)
-        {
-            if (!danhSachPhanAnh.Any()) return "Chưa có phản ánh/sự cố nào được ghi nhận trong hệ thống.";
-
-            var theoLoai = danhSachPhanAnh.GroupBy(p => p.LoaiPhanAnh)
-                .Select(g => $"{ChuyenLoai(g.Key)}: {g.Count()}")
-                .ToList();
-
-            var theoTrangThai = danhSachPhanAnh.GroupBy(p => p.TrangThai)
-                .Select(g => $"{ChuyenTrangThai(g.Key)}: {g.Count()}")
-                .ToList();
-
-            var tomTatCoBan = $"Tổng {danhSachPhanAnh.Count} phản ánh/sự cố. Phân loại: {string.Join(", ", theoLoai)}. " +
-                               $"Trạng thái xử lý: {string.Join(", ", theoTrangThai)}.";
-
-            if (string.IsNullOrWhiteSpace(ApiKey))
-                return tomTatCoBan;
-
-            var noiDungGopLai = string.Join("\n", danhSachPhanAnh.Select(p => $"- [{ChuyenLoai(p.LoaiPhanAnh)}] {p.TieuDe}: {p.NoiDung}"));
-            var systemPrompt = "Bạn là trợ lý AI của hệ thống quản lý ký túc xá. Dựa trên danh sách phản ánh/sự cố dưới đây, " +
-                                "hãy viết một đoạn tóm tắt ngắn (3-5 câu) bằng tiếng Việt nêu bật các vấn đề nổi cộm và đề xuất hướng xử lý ưu tiên. " +
-                                "Chỉ dựa trên dữ liệu được cung cấp, không bịa thêm thông tin.";
-
-            var ketQuaAI = await GoiLLMAsync(systemPrompt, noiDungGopLai);
-            return ketQuaAI != null ? $"{tomTatCoBan}\n\nTóm tắt AI: {ketQuaAI}" : tomTatCoBan;
-        }
-
-        private static string ChuyenLoai(LoaiPhanAnh loai) => loai switch
-        {
-            LoaiPhanAnh.SuCoCoSoVatChat => "Sự cố cơ sở vật chất",
-            LoaiPhanAnh.ViPhamNoiQuy => "Vi phạm nội quy",
-            _ => "Khác"
-        };
-
-        private static string ChuyenTrangThai(TrangThaiPhanAnh tt) => tt switch
-        {
-            TrangThaiPhanAnh.Moi => "Mới",
-            TrangThaiPhanAnh.DangXuLy => "Đang xử lý",
-            TrangThaiPhanAnh.DaXuLy => "Đã xử lý",
-            TrangThaiPhanAnh.TuChoi => "Từ chối",
-            _ => tt.ToString()
-        };
     }
 }

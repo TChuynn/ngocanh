@@ -15,7 +15,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 
-// AIService: xử lý chatbot, gợi ý xếp phòng (UC004), tóm tắt phản ánh (UC007)
+// AIService: xử lý AI tóm tắt phản ánh theo nhóm vấn đề (UC006/UC007) và AI gợi ý xếp phòng theo tiêu chí (UC004)
 builder.Services.AddScoped<IAIService, AIService>();
 
 // Xác thực bằng Cookie - UC001: đăng nhập và phân quyền theo VaiTro (QuanLyKTX/SinhVien/KeToan)
@@ -30,7 +30,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
-// Cho phép gửi AntiForgery token qua header (dùng cho request AJAX/JSON của khung Chat AI)
+// Cấu hình Antiforgery token
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 
 var app = builder.Build();

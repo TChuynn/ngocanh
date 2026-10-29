@@ -1,0 +1,213 @@
+@model KTXManagement.Demo.Models.ViewModels.AITomTatPhanAnhViewModel
+@{
+    ViewData["Title"] = "AI Tóm tắt phản ánh theo nhóm vấn đề";
+    var trangThaiFilter = ViewBag.TrangThaiFilter as string ?? "";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h3 class="mb-1 fw-bold" style="color: var(--ocean-900);">🤖 AI Tóm tắt &amp; Phân nhóm phản ánh/sự cố</h3>
+        <div class="text-muted small">Dành cho Quản lý KTX — Tự động phân loại ngữ nghĩa, đánh giá mức độ khẩn cấp và đề xuất giải pháp xử lý</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="TomTatAI" class="btn btn-sm btn-outline-primary">🔄 Làm mới phân tích AI</a>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Danh sách phản ánh</a>
+    </div>
+</div>
+
+<!-- Bộ lọc trạng thái phong cách Pill hiện đại -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body py-2 px-3">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="small fw-bold text-secondary me-1">🔍 Lọc theo tình trạng:</span>
+            <a asp-action="TomTatAI" class="btn btn-sm @(string.IsNullOrEmpty(trangThaiFilter) ? "btn-primary" : "btn-outline-secondary")">Tất cả (@Model.TongSoPhanAnh)</a>
+            <a asp-action="TomTatAI" asp-route-trangThai="Moi" class="btn btn-sm @(trangThaiFilter == "Moi" ? "btn-danger" : "btn-outline-danger")">Mới tiếp nhận (@Model.TongPhanAnhMoi)</a>
+            <a asp-action="TomTatAI" asp-route-trangThai="DangXuLy" class="btn btn-sm @(trangThaiFilter == "DangXuLy" ? "btn-warning text-dark" : "btn-outline-warning text-dark")">Đang xử lý (@Model.TongDangXuLy)</a>
+            <a asp-action="TomTatAI" asp-route-trangThai="DaXuLy" class="btn btn-sm @(trangThaiFilter == "DaXuLy" ? "btn-success" : "btn-outline-success")">Đã xử lý (@Model.TongDaXuLy)</a>
+        </div>
+    </div>
+</div>
+
+<!-- 4 thẻ chỉ số tổng quan Gradient -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card stat-card-ocean">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">@Model.TongSoPhanAnh</div>
+                    <div class="stat-label">Tổng số phản ánh / sự cố</div>
+                </div>
+                <span class="fs-1 opacity-50">📋</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-card-coral">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">@Model.TongPhanAnhMoi</div>
+                    <div class="stat-label">Cần tiếp nhận &amp; xử lý ngay</div>
+                </div>
+                <span class="fs-1 opacity-50">🚨</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-card-amber">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">@Model.TongDangXuLy</div>
+                    <div class="stat-label">Đang trong quá trình xử lý</div>
+                </div>
+                <span class="fs-1 opacity-50">⏳</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-card-teal">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">@Model.TongDaXuLy</div>
+                    <div class="stat-label">Đã giải quyết hoàn tất</div>
+                </div>
+                <span class="fs-1 opacity-50">✅</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nhận xét tổng quan AI & Hành động ưu tiên -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card h-100 shadow-sm border-0 card-hover-lift" style="border-top: 4px solid var(--ocean-600) !important;">
+            <div class="card-header bg-white py-3 px-4 d-flex align-items-center">
+                <span class="fs-4 me-2">🧠</span>
+                <span class="fw-bold" style="color: var(--ocean-900);">Đánh giá &amp; Nhận định tổng quan từ AI</span>
+            </div>
+            <div class="card-body p-4">
+                <p class="mb-0 text-secondary" style="white-space: pre-wrap; line-height: 1.7;">@Model.NhanXetTongQuanAI</p>
+                <div class="mt-3 text-muted small border-top pt-2 d-flex justify-content-between align-items-center">
+                    <span>🕒 Cập nhật lần cuối: @Model.ThoiGianPhanTich.ToString("HH:mm:ss dd/MM/yyyy")</span>
+                    <span class="badge badge-ocean">AI Model Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100 shadow-sm border-0 card-hover-lift" style="border-top: 4px solid #e11d48 !important;">
+            <div class="card-header bg-white py-3 px-4 d-flex align-items-center">
+                <span class="fs-4 me-2">🎯</span>
+                <span class="fw-bold text-danger">Hành động ưu tiên cho Ban Quản lý</span>
+            </div>
+            <div class="card-body p-4">
+                <ul class="list-group list-group-flush">
+                    @foreach (var kn in Model.KhuyenNghiUuTienAI)
+                    {
+                        <li class="list-group-item px-0 py-2 small fw-semibold border-light" style="line-height: 1.5;">@kn</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chi tiết theo từng nhóm vấn đề -->
+<h4 class="mb-3 fw-bold" style="color: var(--ocean-900);">📋 Chi tiết phân tích theo từng nhóm vấn đề:</h4>
+
+@if (!Model.CacNhomVanDe.Any())
+{
+    <div class="alert alert-info">Không có dữ liệu phản ánh/sự cố nào trong bộ lọc này.</div>
+}
+else
+{
+    @foreach (var nhom in Model.CacNhomVanDe)
+    {
+        <div class="card mb-4 shadow-sm border-0 ai-problem-group-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fs-3">@nhom.Icon</span>
+                        <h5 class="mb-0 fw-bold" style="color: var(--ocean-950);">@nhom.TenNhom</h5>
+                        <span class="badge badge-ocean fs-6">@nhom.SoLuong sự cố (@nhom.TyLePhanTram%)</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-@nhom.MucDoUuTienBadge px-3 py-2 fs-6">Mức độ ưu tiên: @nhom.MucDoUuTien</span>
+                    </div>
+                </div>
+
+                <div class="progress mb-3" style="height: 8px; border-radius: 10px; background-color: var(--ocean-100);">
+                    <div class="progress-bar bg-@nhom.MauSac" role="progressbar" style="width: @nhom.TyLePhanTram%; border-radius: 10px;" aria-valuenow="@nhom.TyLePhanTram" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <div class="fw-bold text-secondary mb-1">🤖 AI Tóm tắt tình trạng:</div>
+                            <div class="small" style="line-height: 1.6;">@nhom.TomTatAI</div>
+                            @if (nhom.DanhSachPhongLienQuan.Any())
+                            {
+                                <div class="mt-2 pt-2 border-top small">
+                                    <span class="text-muted fw-semibold">Các phòng liên quan:</span>
+                                    @foreach (var p in nhom.DanhSachPhongLienQuan)
+                                    {
+                                        <span class="badge bg-white text-primary border ms-1">P.@p</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded border h-100" style="background-color: var(--ocean-50); border-left: 4px solid var(--ocean-600) !important;">
+                            <div class="fw-bold text-primary mb-1">💡 Đề xuất hành động từ AI:</div>
+                            <div class="small text-dark" style="line-height: 1.6;">@nhom.DeXuatHanhDongAI</div>
+                            <div class="mt-2 pt-2 border-top small text-muted">
+                                Trạng thái nhóm: 
+                                <b class="text-danger">@nhom.SoLuongMoi</b> mới • 
+                                <b class="text-warning">@nhom.SoLuongDangXuLy</b> đang xử lý • 
+                                <b class="text-success">@nhom.SoLuongDaXuLy</b> đã giải quyết
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách các phản ánh thuộc nhóm này -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 110px;">Ngày gửi</th>
+                                <th style="width: 90px;">Phòng</th>
+                                <th style="width: 120px;">Sinh viên</th>
+                                <th>Tiêu đề &amp; Nội dung sự cố</th>
+                                <th style="width: 120px;">Trạng thái</th>
+                                <th style="width: 90px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pa in nhom.DanhSachPhanAnh)
+                            {
+                                <tr>
+                                    <td class="small">@pa.NgayGui.ToString("dd/MM/yyyy")</td>
+                                    <td><span class="badge badge-ocean">@(pa.Phong?.SoPhong ?? "Khu chung")</span></td>
+                                    <td class="small fw-semibold">@pa.SinhVien?.MSSV</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@pa.TieuDe</div>
+                                        <div class="text-muted small text-truncate" style="max-width: 440px;">@pa.NoiDung</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge text-bg-@(pa.TrangThai == TrangThaiPhanAnh.DaXuLy ? "success" : pa.TrangThai == TrangThaiPhanAnh.Moi ? "danger" : "warning")">
+                                            @pa.TrangThai
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="XuLy" asp-route-id="@pa.Id" class="btn btn-sm btn-outline-primary">Xử lý</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}

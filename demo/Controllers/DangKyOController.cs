@@ -37,6 +37,92 @@ namespace KTXManagement.Demo.Controllers
             return View(list);
         }
 
+        // ============ SINH VIÊN: AI gợi ý xếp phòng theo chỗ trống và tiêu chí ============
+
+        [Authorize(Roles = "SinhVien")]
+        [HttpGet]
+        public async Task<IActionResult> GoiYPhong()
+        {
+            var taiKhoanId = User.GetTaiKhoanId();
+            var sv = await _db.SinhViens.Include(s => s.TaiKhoan).FirstOrDefaultAsync(s => s.TaiKhoanId == taiKhoanId);
+            if (sv == null) return NotFound();
+
+            var tieuChi = new TieuChiGoiYPhongViewModel
+            {
+                SinhVienId = sv.Id,
+                MSSV = sv.MSSV,
+                HoTen = sv.TaiKhoan?.HoTen ?? sv.MSSV,
+                GioiTinh = sv.GioiTinh,
+                Lop = sv.Lop,
+                Khoa = sv.Khoa,
+                UuTienBanCungPhong = "CungKhoa",
+                MucGiaMongMuon = "TatCa",
+                ViTriTang = "TatCa",
+                PhongCachSong = "YenTinh"
+            };
+
+            var ketQua = await _aiService.GoiYPhongChoSinhVienAsync(sv, tieuChi);
+            return View(ketQua);
+        }
+
+        [Authorize(Roles = "SinhVien")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GoiYPhong(TieuChiGoiYPhongViewModel tieuChi)
+        {
+            var taiKhoanId = User.GetTaiKhoanId();
+            var sv = await _db.SinhViens.Include(s => s.TaiKhoan).FirstOrDefaultAsync(s => s.TaiKhoanId == taiKhoanId);
+            if (sv == null) return NotFound();
+
+            tieuChi.SinhVienId = sv.Id;
+            tieuChi.MSSV = sv.MSSV;
+            tieuChi.HoTen = sv.TaiKhoan?.HoTen ?? sv.MSSV;
+            tieuChi.GioiTinh = sv.GioiTinh;
+            tieuChi.Lop = sv.Lop;
+            tieuChi.Khoa = sv.Khoa;
+
+            var ketQua = await _aiService.GoiYPhongChoSinhVienAsync(sv, tieuChi);
+            return View(ketQua);
+        }
+
+        [Authorize(Roles = "SinhVien")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChonPhongGoiY(int phongId, int? giuongId, string? ghiChu)
+        {
+            var taiKhoanId = User.GetTaiKhoanId();
+            var sv = await _db.SinhViens.FirstOrDefaultAsync(s => s.TaiKhoanId == taiKhoanId);
+            if (sv == null) return NotFound();
+
+            var dangCoYeuCauMo = await _db.DangKyOs.AnyAsync(d => d.SinhVienId == sv.Id &&
+                (d.TrangThai == TrangThaiDangKyO.ChoDuyet || d.TrangThai == TrangThaiDangKyO.DangO || d.TrangThai == TrangThaiDangKyO.DaDuyet));
+            if (dangCoYeuCauMo)
+            {
+                TempData["Loi"] = "Bạn đang có yêu cầu đăng ký ở hoặc đang ở KTX, không thể gửi thêm yêu cầu mới.";
+                return RedirectToAction(nameof(CuaToi));
+            }
+
+            var phong = await _db.Phongs.FindAsync(phongId);
+            var giuong = giuongId.HasValue ? await _db.Giuongs.FindAsync(giuongId.Value) : null;
+
+            var yeuCau = new DangKyO
+            {
+                SinhVienId = sv.Id,
+                PhongId = phongId,
+                GiuongId = giuongId,
+                TrangThai = TrangThaiDangKyO.ChoDuyet,
+                GhiChu = $"[AI Gợi ý phòng: {phong?.SoPhong}{(giuong != null ? $" - Giường: {giuong.SoGiuong}" : "")}] {(string.IsNullOrWhiteSpace(ghiChu) ? "" : " | " + ghiChu)}",
+                NgayDangKy = DateTime.Now
+            };
+
+            _db.DangKyOs.Add(yeuCau);
+            sv.TrangThaiO = TrangThaiOKTX.DaDangKy;
+            await _db.SaveChangesAsync();
+
+            TempData["ThongBao"] = $"Đã gửi yêu cầu đăng ký phòng {phong?.SoPhong} (do AI gợi ý). Vui lòng chờ Quản lý KTX xác nhận.";
+            return RedirectToAction(nameof(CuaToi));
+        }
+
         [Authorize(Roles = "SinhVien")]
         [HttpGet]
         public async Task<IActionResult> GuiYeuCau()

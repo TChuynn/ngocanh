@@ -1,11 +1,27 @@
 @{ ViewData["Title"] = "Gửi yêu cầu đăng ký ở"; }
-<h4>Gửi yêu cầu đăng ký ở KTX</h4>
-<form asp-action="GuiYeuCau" method="post" class="col-md-6">
-    <div class="mb-3">
-        <label class="form-label">Ghi chú (nguyện vọng, VD: muốn ở cùng phòng với bạn...)</label>
-        <textarea name="ghiChu" class="form-control" rows="3"></textarea>
+<div class="row">
+    <div class="col-md-7">
+        <h4 class="mb-3">Gửi yêu cầu đăng ký ở KTX</h4>
+
+        <div class="alert alert-info shadow-sm mb-4">
+            <div class="fw-bold">💡 Bạn có biết?</div>
+            <div class="small mt-1">
+                Thay vì điền ghi chú thủ công, bạn có thể dùng tính năng <b>AI Gợi ý xếp phòng</b> để xem danh sách phòng còn giường trống phù hợp nhất với bạn và đăng ký trực tiếp!
+            </div>
+            <div class="mt-2">
+                <a asp-action="GoiYPhong" class="btn btn-sm btn-primary">✨ Dùng AI Gợi ý chọn phòng ngay</a>
+            </div>
+        </div>
+
+        <form asp-action="GuiYeuCau" method="post">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Ghi chú nguyện vọng của bạn:</label>
+                <textarea name="ghiChu" class="form-control" rows="4" placeholder="VD: Muốn ở cùng phòng với bạn cùng lớp, thích phòng tầng thấp..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Gửi yêu cầu đăng ký</button>
+            <a asp-action="CuaToi" class="btn btn-outline-secondary">Hủy</a>
+        </form>
+
+        <p class="text-muted small mt-3">Sau khi gửi, Quản lý KTX sẽ tiếp nhận và tiến hành xếp phòng/giường cho bạn.</p>
     </div>
-    <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
-    <a asp-action="CuaToi" class="btn btn-outline-secondary">Hủy</a>
-</form>
-<p class="text-muted small mt-3">Sau khi gửi, Quản lý KTX sẽ xem xét và xếp phòng cho bạn (có sự hỗ trợ gợi ý từ AI).</p>
+</div>

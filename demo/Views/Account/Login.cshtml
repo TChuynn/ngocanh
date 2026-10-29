@@ -1,38 +1,81 @@
 @model LoginViewModel
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Đăng nhập KTX AI";
 }
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h4 class="card-title mb-3 text-center">🏢 Đăng nhập hệ thống KTX AI</h4>
 
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="row justify-content-center align-items-center py-4">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg border-0 card-hover-lift">
+            <div class="card-header-ocean text-center py-4">
+                <div class="fs-1 mb-1">🏢</div>
+                <h4 class="fw-bold mb-1" style="color: var(--ocean-900);">Đăng nhập KTX AI</h4>
+                <div class="text-muted small">Hệ thống Quản lý Ký túc xá Thông minh</div>
+            </div>
 
-                <form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                <form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" id="loginForm">
                     <div class="mb-3">
                         <label class="form-label">Tên đăng nhập</label>
-                        <input asp-for="TenDangNhap" class="form-control" autofocus />
-                        <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0">👤</span>
+                            <input asp-for="TenDangNhap" class="form-control border-start-0" id="inputTenDangNhap" placeholder="Nhập tên đăng nhập..." autofocus />
+                        </div>
+                        <span asp-validation-for="TenDangNhap" class="text-danger small"></span>
                     </div>
-                    <div class="mb-3">
+
+                    <div class="mb-4">
                         <label class="form-label">Mật khẩu</label>
-                        <input asp-for="MatKhau" class="form-control" type="password" />
-                        <span asp-validation-for="MatKhau" class="text-danger"></span>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0">🔒</span>
+                            <input asp-for="MatKhau" class="form-control border-start-0" id="inputMatKhau" type="password" placeholder="Nhập mật khẩu..." />
+                        </div>
+                        <span asp-validation-for="MatKhau" class="text-danger small"></span>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold shadow-sm">
+                        Đăng nhập hệ thống →
+                    </button>
                 </form>
 
-                <hr />
-                <p class="small text-muted mb-1">Tài khoản demo (mật khẩu chung: <code>123456</code>):</p>
-                <ul class="small text-muted mb-0">
-                    <li><b>quanly</b> — Quản lý KTX</li>
-                    <li><b>ketoan</b> — Kế toán</li>
-                    <li><b>sv001, sv002, sv003, sv004</b> — Sinh viên</li>
-                    <li><b>sv005</b> — tài khoản minh hoạ đã <b>bị khóa</b> (UC001-A3)</li>
-                </ul>
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-secondary">⚡ Chọn nhanh tài khoản demo:</span>
+                        <span class="small text-muted">(Pass: <code>123456</code>)</span>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary text-start d-flex justify-content-between align-items-center py-2" onclick="chonTaiKhoan('quanly')">
+                            <span>🔑 <b>quanly</b> <span class="text-muted small">— Quản lý KTX (Xếp phòng, Sự cố AI)</span></span>
+                            <span class="badge bg-primary">Chọn</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success text-start d-flex justify-content-between align-items-center py-2" onclick="chonTaiKhoan('sv003')">
+                            <span>🎓 <b>sv003</b> <span class="text-muted small">— Sinh viên (Trải nghiệm AI Gợi ý phòng)</span></span>
+                            <span class="badge bg-success">Chọn</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info text-start d-flex justify-content-between align-items-center py-2" onclick="chonTaiKhoan('sv001')">
+                            <span>🎓 <b>sv001</b> <span class="text-muted small">— Sinh viên (Đang ở phòng A101)</span></span>
+                            <span class="badge bg-info text-dark">Chọn</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2" onclick="chonTaiKhoan('ketoan')">
+                            <span>💳 <b>ketoan</b> <span class="text-muted small">— Kế toán (Phiếu phí, Công nợ)</span></span>
+                            <span class="badge bg-secondary">Chọn</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger text-start d-flex justify-content-between align-items-center py-2" onclick="chonTaiKhoan('sv005')">
+                            <span>🔒 <b>sv005</b> <span class="text-muted small">— Minh họa tài khoản bị khóa</span></span>
+                            <span class="badge bg-danger">Bị khóa</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function chonTaiKhoan(tenDangNhap) {
+        document.getElementById('inputTenDangNhap').value = tenDangNhap;
+        document.getElementById('inputMatKhau').value = '123456';
+    }
+</script>

@@ -142,9 +142,24 @@ namespace KTXManagement.Demo.Data
 
             // ===== 5. Phản ánh / sự cố (UC006) =====
             db.PhanAnhSuCos.AddRange(
-                new PhanAnhSuCo { SinhVienId = sv1.Id, PhongId = phongA101.Id, TieuDe = "Bóng đèn phòng A101 bị hỏng", NoiDung = "Bóng đèn khu vực học tập trong phòng đã tắt hẳn 2 ngày nay, mong ban quản lý cử người thay.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-2), TrangThai = TrangThaiPhanAnh.Moi },
-                new PhanAnhSuCo { SinhVienId = sv2.Id, PhongId = phongA101.Id, TieuDe = "Phòng bên cạnh gây ồn ào buổi tối", NoiDung = "Phòng A102 thường xuyên mở nhạc lớn sau 23h, ảnh hưởng đến giờ nghỉ của các phòng xung quanh.", LoaiPhanAnh = LoaiPhanAnh.ViPhamNoiQuy, NgayGui = DateTime.Now.AddDays(-5), TrangThai = TrangThaiPhanAnh.DangXuLy, PhanHoi = "Ban quản lý đã nhắc nhở phòng A102, sẽ theo dõi thêm." },
-                new PhanAnhSuCo { SinhVienId = sv4.Id, PhongId = phongB101.Id, TieuDe = "Vòi nước nhà vệ sinh bị rò rỉ", NoiDung = "Vòi nước khu vệ sinh chung tầng 1 toà B bị rò nước liên tục, gây trơn trượt.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-10), TrangThai = TrangThaiPhanAnh.DaXuLy, PhanHoi = "Đã sửa chữa xong ngày hôm sau, cảm ơn sinh viên đã phản ánh." }
+                // Nhóm Điện
+                new PhanAnhSuCo { SinhVienId = sv1.Id, PhongId = phongA101.Id, TieuDe = "Bóng đèn phòng A101 bị hỏng", NoiDung = "Bóng đèn khu vực học tập trong phòng đã tắt hẳn 2 ngày nay, mong ban quản lý cử thợ điện thay mới.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-2), TrangThai = TrangThaiPhanAnh.Moi },
+                new PhanAnhSuCo { SinhVienId = sv3.Id, PhongId = phongA201.Id, TieuDe = "Ổ cắm điện tầng 2 có hiện tượng chập tia lửa", NoiDung = "Ổ cắm gần cửa ra vào phòng A201 bị lỏng chân cắm, thỉnh thoảng xẹt tia lửa điện gây lo ngại cháy nổ.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-1), TrangThai = TrangThaiPhanAnh.Moi },
+                
+                // Nhóm Nước & Vệ sinh
+                new PhanAnhSuCo { SinhVienId = sv4.Id, PhongId = phongB101.Id, TieuDe = "Vòi nước nhà vệ sinh bị rò rỉ", NoiDung = "Vòi nước khu vệ sinh tầng 1 toà B bị rò nước liên tục, nước chảy tràn sàn gây trơn trượt.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-10), TrangThai = TrangThaiPhanAnh.DaXuLy, PhanHoi = "Đã sửa chữa thay gioăng vòi nước xong ngày hôm sau, cảm ơn sinh viên đã phản ánh." },
+                new PhanAnhSuCo { SinhVienId = sv1.Id, PhongId = phongA101.Id, TieuDe = "Bồn rửa mặt thoát nước chậm", NoiDung = "Khu vực bồn rửa mặt phòng A101 bị nghẹt tóc và cặn bẩn, thoát nước rất chậm bốc mùi khó chịu.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-3), TrangThai = TrangThaiPhanAnh.DangXuLy, PhanHoi = "Bộ phận tạp vụ đã tiếp nhận, sẽ thông tắc trong ngày." },
+
+                // Nhóm Cơ sở vật chất & Khóa cửa
+                new PhanAnhSuCo { SinhVienId = sv4.Id, PhongId = phongB101.Id, TieuDe = "Ổ khóa cửa phòng B101 bị kẹt", NoiDung = "Khóa cửa chính phòng B101 tra chìa rất khó xoay, sinh viên mất nhiều thời gian mới mở được cửa.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-4), TrangThai = TrangThaiPhanAnh.DangXuLy, PhanHoi = "Đã hẹn thợ khóa xử lý trong sáng mai." },
+                new PhanAnhSuCo { SinhVienId = sv2.Id, PhongId = phongA101.Id, TieuDe = "Bản lề cửa sổ phòng A101 bị lỏng ốc", NoiDung = "Gió to làm cánh cửa sổ đập mạnh do lỏng ốc bản lề trên, nguy cơ rơi vỡ kính.", LoaiPhanAnh = LoaiPhanAnh.SuCoCoSoVatChat, NgayGui = DateTime.Now.AddDays(-1), TrangThai = TrangThaiPhanAnh.Moi },
+
+                // Nhóm An ninh & Vi phạm nội quy
+                new PhanAnhSuCo { SinhVienId = sv2.Id, PhongId = phongA101.Id, TieuDe = "Phòng bên cạnh gây ồn ào buổi tối", NoiDung = "Phòng A102 thường xuyên mở nhạc lớn sau 23h, ảnh hưởng đến giờ nghỉ và ôn thi của các phòng xung quanh.", LoaiPhanAnh = LoaiPhanAnh.ViPhamNoiQuy, NgayGui = DateTime.Now.AddDays(-5), TrangThai = TrangThaiPhanAnh.DangXuLy, PhanHoi = "Ban quản lý đã nhắc nhở phòng A102, sẽ tiếp tục theo dõi giờ giới nghiêm." },
+                new PhanAnhSuCo { SinhVienId = sv3.Id, PhongId = phongA201.Id, TieuDe = "Phát hiện người lạ vào hành lang tầng 2 lúc đêm", NoiDung = "Tối qua khoảng 23h30 có người lạ không đeo thẻ KTX đi lại ở khu vực hành lang tầng 2 toà A.", LoaiPhanAnh = LoaiPhanAnh.ViPhamNoiQuy, NgayGui = DateTime.Now, TrangThai = TrangThaiPhanAnh.Moi },
+
+                // Nhóm Mạng & Tiện ích chung
+                new PhanAnhSuCo { SinhVienId = sv1.Id, PhongId = phongA101.Id, TieuDe = "Wifi toà A chập chờn vào buổi tối", NoiDung = "Mạng internet wifi ở toà A từ 20h đến 22h rất chậm, thường xuyên mất kết nối khi học trực tuyến.", LoaiPhanAnh = LoaiPhanAnh.Khac, NgayGui = DateTime.Now.AddDays(-6), TrangThai = TrangThaiPhanAnh.DaXuLy, PhanHoi = "Đã khởi động lại bộ phát Access Point và liên hệ nhà mạng nâng băng thông." }
             );
             db.SaveChanges();
         }

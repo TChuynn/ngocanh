@@ -1,0 +1,205 @@
+@model KTXManagement.Demo.Models.ViewModels.KetQuaGoiYPhongViewModel
+@{
+    ViewData["Title"] = "AI Gợi ý xếp phòng KTX";
+    var tc = Model.TieuChi;
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h3 class="mb-1 fw-bold" style="color: var(--ocean-900);">✨ AI Gợi ý xếp phòng KTX</h3>
+        <div class="text-muted small">Hệ thống AI tự động phân tích chỗ trống thực tế và tính toán mức độ phù hợp theo tiêu chí của bạn</div>
+    </div>
+    <a asp-action="CuaToi" class="btn btn-sm btn-outline-primary">← Đăng ký ở của tôi</a>
+</div>
+
+<div class="row g-4">
+    <!-- CỘT BÊN TRÁI: FORM CẤU HÌNH TIÊU CHÍ -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 sticky-top card-hover-lift" style="top: 5.5rem;">
+            <div class="card-header-ocean py-3 px-4">
+                <span class="fs-5 fw-bold">⚙️ Tiêu chí xếp phòng mong muốn</span>
+            </div>
+            <div class="card-body p-4">
+                <!-- Thông tin sinh viên cố định -->
+                <div class="p-3 rounded mb-3 small" style="background-color: var(--ocean-50); border: 1px solid var(--ocean-200);">
+                    <div class="fw-bold text-primary mb-1">🎓 Hồ sơ sinh viên của bạn:</div>
+                    <div>MSSV: <b>@tc.MSSV</b> — @tc.HoTen</div>
+                    <div>Giới tính: <span class="badge text-bg-@(tc.GioiTinh == GioiTinh.Nam ? "primary" : "danger")">@(tc.GioiTinh == GioiTinh.Nam ? "Nam" : "Nữ")</span> <span class="text-muted">(Phòng đúng giới tính)</span></div>
+                    <div>Lớp: <b>@tc.Lop</b> — Khoa: <b>@tc.Khoa</b></div>
+                </div>
+
+                <form asp-action="GoiYPhong" method="post">
+                    <!-- 1. Ưu tiên bạn cùng phòng -->
+                    <div class="mb-3">
+                        <label class="form-label">1. Bạn cùng phòng mong muốn:</label>
+                        <select name="UuTienBanCungPhong" class="form-select">
+                            <option value="CungKhoa" selected="@(tc.UuTienBanCungPhong == "CungKhoa")">Ưu tiên cùng Khoa (@tc.Khoa)</option>
+                            <option value="CungLop" selected="@(tc.UuTienBanCungPhong == "CungLop")">Ưu tiên cùng Lớp (@tc.Lop)</option>
+                            <option value="KhongYeuCau" selected="@(tc.UuTienBanCungPhong == "KhongYeuCau")">Không yêu cầu (mở rộng bạn bè)</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Vị trí tầng -->
+                    <div class="mb-3">
+                        <label class="form-label">2. Vị trí tầng:</label>
+                        <select name="ViTriTang" class="form-select">
+                            <option value="TatCa" selected="@(tc.ViTriTang == "TatCa")">Bất kỳ tầng nào (Tất cả)</option>
+                            <option value="TangThap" selected="@(tc.ViTriTang == "TangThap")">Tầng thấp (Tầng 1 - 2, tiện đi lại)</option>
+                            <option value="TangCao" selected="@(tc.ViTriTang == "TangCao")">Tầng cao (Tầng 3 trở lên, thoáng mát)</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. Mức phí ngân sách -->
+                    <div class="mb-3">
+                        <label class="form-label">3. Mức phí phòng hàng tháng:</label>
+                        <select name="MucGiaMongMuon" class="form-select">
+                            <option value="TatCa" selected="@(tc.MucGiaMongMuon == "TatCa")">Tất cả mức giá</option>
+                            <option value="TietKiem" selected="@(tc.MucGiaMongMuon == "TietKiem")">Phòng tiết kiệm (≤ 700.000đ/tháng)</option>
+                            <option value="TieuChuan" selected="@(tc.MucGiaMongMuon == "TieuChuan")">Phòng tiện nghi (&gt; 700.000đ/tháng)</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. Phong cách sinh hoạt -->
+                    <div class="mb-3">
+                        <label class="form-label">4. Phong cách sinh hoạt:</label>
+                        <select name="PhongCachSong" class="form-select">
+                            <option value="YenTinh" selected="@(tc.PhongCachSong == "YenTinh")">Ưu tiên yên tĩnh (nhiều chỗ, phòng 4 người)</option>
+                            <option value="DongVui" selected="@(tc.PhongCachSong == "DongVui")">Ưu tiên giao lưu (phòng 6-8 người)</option>
+                            <option value="CanBang" selected="@(tc.PhongCachSong == "CanBang")">Cân bằng</option>
+                        </select>
+                    </div>
+
+                    <!-- 5. Ghi chú thêm -->
+                    <div class="mb-4">
+                        <label class="form-label">Ghi chú nguyện vọng thêm (nếu có):</label>
+                        <input type="text" name="GhiChuNguyenVong" value="@tc.GhiChuNguyenVong" class="form-control" placeholder="VD: Thích giường gần cửa sổ..." />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold shadow-sm">
+                        🔍 AI Phân tích &amp; Tìm phòng phù hợp
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT BÊN PHẢI: KẾT QUẢ GỢI Ý TỪ AI -->
+    <div class="col-lg-8">
+        <!-- Card nhận xét tổng quan AI -->
+        <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 5px solid var(--ocean-600) !important;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="fs-3 me-2">🤖</span>
+                    <h5 class="mb-0 fw-bold" style="color: var(--ocean-900);">Tư vấn &amp; Đánh giá từ Trợ lý AI</h5>
+                </div>
+                <div class="small" style="line-height: 1.7; color: var(--ocean-950);">
+                    @Model.NhanXetTongQuatAI
+                </div>
+            </div>
+        </div>
+
+        @if (!Model.DanhSachGoiY.Any())
+        {
+            <div class="alert alert-warning">
+                Không tìm thấy phòng nào phù hợp với toàn bộ tiêu chí đã chọn. Bạn hãy thử nới lỏng tiêu chí (chọn tất cả tầng hoặc tất cả mức giá) để AI tìm thêm phòng trống nhé.
+            </div>
+        }
+        else
+        {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="small fw-bold text-uppercase" style="color: var(--ocean-800); letter-spacing: 0.05em;">Danh sách phòng đề xuất theo độ phù hợp:</span>
+                <span class="badge badge-ocean fs-6">Tìm thấy @Model.DanhSachGoiY.Count phòng trống</span>
+            </div>
+
+            @foreach (var p in Model.DanhSachGoiY)
+            {
+                <div class="card mb-4 shadow-sm border-0 card-hover-lift">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                            <div>
+                                <h4 class="mb-1 fw-bold" style="color: var(--ocean-900);">
+                                    🏢 Phòng @p.SoPhong
+                                    <span class="fs-6 text-muted fw-normal">— @p.TenToaNha (Tầng @p.TangSo)</span>
+                                </h4>
+                                <div class="text-muted small">
+                                    Đơn giá: <b class="text-primary fs-6">@p.DonGiaThang.ToString("N0")đ/tháng</b> • 
+                                    Sức chứa: <b>@p.SucChua</b> người • 
+                                    Hiện còn trống: <b class="text-success fs-6">@p.SoGiuongTrong giường</b>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="ai-badge-score">
+                                    @p.DiemPhuHop%
+                                </span>
+                                <div class="small fw-bold text-primary mt-1">@p.DanhGiaPhuHop</div>
+                            </div>
+                        </div>
+
+                        <!-- Thanh % điểm phù hợp -->
+                        <div class="progress mb-3" style="height: 8px; border-radius: 10px; background-color: var(--ocean-100);">
+                            <div class="progress-bar" role="progressbar" style="width: @p.DiemPhuHop%; background: var(--grad-ocean); border-radius: 10px;" aria-valuenow="@p.DiemPhuHop" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+
+                        <!-- Các điểm nổi bật -->
+                        <div class="mb-3">
+                            @foreach (var nb in p.DiemNoiBat)
+                            {
+                                <span class="ai-highlight-pill">✓ @nb</span>
+                            }
+                        </div>
+
+                        <!-- Nhận xét chi tiết từ AI -->
+                        <div class="ai-recommendation-box mb-3 small">
+                            <b>💡 AI Phân tích:</b> @p.NhanXetAI
+                        </div>
+
+                        <!-- Bạn cùng phòng hiện tại -->
+                        @if (p.BanCungPhong.Any())
+                        {
+                            <div class="mb-3 small">
+                                <span class="text-muted fw-semibold">Sinh viên cùng phòng hiện tại:</span>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    @foreach (var b in p.BanCungPhong)
+                                    {
+                                        <span class="badge badge-ocean">👤 @b</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3 small text-muted">
+                                <i>(Phòng hiện đang trống hoàn toàn, bạn sẽ là sinh viên đầu tiên nhận phòng)</i>
+                            </div>
+                        }
+
+                        <!-- Form chọn giường & gửi đăng ký -->
+                        <form asp-action="ChonPhongGoiY" method="post" class="p-3 rounded border" style="background-color: var(--ocean-50); border-color: var(--ocean-200) !important;">
+                            <input type="hidden" name="phongId" value="@p.PhongId" />
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold mb-1">Chọn giường trống trong phòng:</label>
+                                    <select name="giuongId" class="form-select form-select-sm">
+                                        @foreach (var g in p.GiuongTrong)
+                                        {
+                                            <option value="@g.GiuongId">Giường @g.SoGiuong (Còn trống)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Lời nhắn gửi Quản lý KTX:</label>
+                                    <input type="text" name="ghiChu" class="form-control form-control-sm" placeholder="Nguyện vọng thêm..." />
+                                </div>
+                                <div class="col-md-3 text-end pt-md-3">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold py-2 shadow-sm" onclick="return confirm('Bạn xác nhận muốn gửi yêu cầu đăng ký phòng @p.SoPhong do AI gợi ý?');">
+                                        👉 Đăng ký phòng này
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

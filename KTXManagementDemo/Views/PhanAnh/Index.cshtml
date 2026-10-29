@@ -1,15 +1,67 @@
 @model List<PhanAnhSuCo>
-@{ ViewData["Title"] = "Phản ánh / Sự cố"; }
-<h4 class="mb-3">📢 Danh sách phản ánh / sự cố</h4>
-<table class="table table-striped">
-    <thead><tr><th>Ngày gửi</th><th>Sinh viên</th><th>Phòng</th><th>Loại</th><th>Tiêu đề</th><th>Trạng thái</th><th></th></tr></thead>
+@{
+    ViewData["Title"] = "Phản ánh / Sự cố";
+    var aiTomTat = ViewBag.AITomTat as KTXManagement.Demo.Models.ViewModels.AITomTatPhanAnhViewModel;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">📢 Quản lý phản ánh / sự cố ký túc xá</h4>
+    <a asp-action="TomTatAI" class="btn btn-primary">
+        🤖 AI Tóm tắt theo nhóm vấn đề &amp; Đề xuất xử lý
+    </a>
+</div>
+
+<!-- Banner tóm tắt nhanh AI -->
+@if (aiTomTat != null && aiTomTat.CacNhomVanDe.Any())
+{
+    <div class="card bg-light border-primary-subtle shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold text-primary">✨ Tóm tắt nhanh từ AI:</span>
+                <span class="small text-muted">Có @aiTomTat.TongPhanAnhMoi sự cố mới cần xử lý</span>
+            </div>
+            <div class="row g-2">
+                @foreach (var nhom in aiTomTat.CacNhomVanDe.Take(4))
+                {
+                    <div class="col-md-3">
+                        <div class="p-2 bg-white rounded border small">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>@nhom.Icon <b>@nhom.TenNhom</b></span>
+                                <span class="badge bg-@nhom.MauSac">@nhom.SoLuong</span>
+                            </div>
+                            <div class="text-muted mt-1 small">
+                                Ưu tiên: <span class="text-@nhom.MucDoUuTienBadge fw-semibold">@nhom.MucDoUuTien</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="mt-2 text-end">
+                <a asp-action="TomTatAI" class="small text-decoration-none fw-semibold">Xem chi tiết báo cáo phân nhóm &amp; đề xuất giải pháp →</a>
+            </div>
+        </div>
+    </div>
+}
+
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Ngày gửi</th>
+            <th>Sinh viên</th>
+            <th>Phòng</th>
+            <th>Loại phản ánh</th>
+            <th>Tiêu đề</th>
+            <th>Trạng thái</th>
+            <th style="width: 100px;">Thao tác</th>
+        </tr>
+    </thead>
     <tbody>
     @foreach (var pa in Model)
     {
         <tr>
             <td>@pa.NgayGui.ToString("dd/MM/yyyy")</td>
-            <td>@pa.SinhVien?.MSSV</td>
-            <td>@pa.Phong?.SoPhong</td>
+            <td><b>@pa.SinhVien?.MSSV</b></td>
+            <td><span class="badge text-bg-light border">@(pa.Phong?.SoPhong ?? "Khu chung")</span></td>
             <td>@pa.LoaiPhanAnh</td>
             <td>@pa.TieuDe</td>
             <td><span class="badge text-bg-@(pa.TrangThai == TrangThaiPhanAnh.DaXuLy ? "success" : pa.TrangThai == TrangThaiPhanAnh.Moi ? "danger" : "warning")">@pa.TrangThai</span></td>

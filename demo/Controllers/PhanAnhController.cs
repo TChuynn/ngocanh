@@ -12,15 +12,40 @@ namespace KTXManagement.Demo.Controllers
     public class PhanAnhController : Controller
     {
         private readonly ApplicationDbContext _db;
-        public PhanAnhController(ApplicationDbContext db) => _db = db;
+        private readonly IAIService _aiService;
 
-        // Quản lý KTX: xem tất cả phản ánh
+        public PhanAnhController(ApplicationDbContext db, IAIService aiService)
+        {
+            _db = db;
+            _aiService = aiService;
+        }
+
+        // Quản lý KTX: xem tất cả phản ánh + tóm tắt AI nhanh
         [Authorize(Roles = "QuanLyKTX")]
         public async Task<IActionResult> Index()
         {
             var list = await _db.PhanAnhSuCos.Include(p => p.SinhVien).Include(p => p.Phong)
                 .OrderByDescending(p => p.NgayGui).ToListAsync();
+
+            ViewBag.AITomTat = await _aiService.TomTatPhanAnhTheoNhomAsync(list);
             return View(list);
+        }
+
+        // Quản lý KTX: xem chi tiết báo cáo AI tóm tắt phản ánh/sự cố theo từng nhóm vấn đề
+        [Authorize(Roles = "QuanLyKTX")]
+        public async Task<IActionResult> TomTatAI(string? trangThai)
+        {
+            var query = _db.PhanAnhSuCos.Include(p => p.SinhVien).Include(p => p.Phong).AsQueryable();
+
+            if (!string.IsNullOrEmpty(trangThai) && Enum.TryParse<TrangThaiPhanAnh>(trangThai, out var tt))
+            {
+                query = query.Where(p => p.TrangThai == tt);
+                ViewBag.TrangThaiFilter = trangThai;
+            }
+
+            var list = await query.OrderByDescending(p => p.NgayGui).ToListAsync();
+            var vm = await _aiService.TomTatPhanAnhTheoNhomAsync(list);
+            return View(vm);
         }
 
         [Authorize(Roles = "QuanLyKTX")]

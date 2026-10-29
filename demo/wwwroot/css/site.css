@@ -1,101 +1,532 @@
+/* ==========================================================================
+   KTX AI - MODERN OCEAN BLUE & BRIGHT LIGHT THEME
+   Chủ đề: Nền sáng sủa, tinh tế, màu chủ đạo Xanh Nước Biển (Ocean / Azure Blue)
+   ========================================================================== */
+
+:root {
+    /* Ocean Blue Palette */
+    --ocean-50: #f0f9ff;
+    --ocean-100: #e0f2fe;
+    --ocean-200: #bae6fd;
+    --ocean-300: #7dd3fc;
+    --ocean-400: #38bdf8;
+    --ocean-500: #0ea5e9;
+    --ocean-600: #0284c7;  /* Primary Ocean Blue */
+    --ocean-700: #0369a1;  /* Deep Ocean Blue */
+    --ocean-800: #075985;
+    --ocean-900: #0c4a6e;
+
+    /* Theme Tokens */
+    --primary-color: #0284c7;
+    --primary-hover: #0369a1;
+    --primary-light: #e0f2fe;
+    --accent-cyan: #06b6d4;
+
+    /* Gradients */
+    --grad-ocean: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+    --grad-navbar: linear-gradient(135deg, #075985 0%, #0284c7 50%, #0ea5e9 100%);
+    --grad-hero: radial-gradient(1200px circle at top left, #e0f2fe 0%, #f0f9ff 40%, #f8fafc 100%);
+    --grad-card-header: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+
+    /* Backgrounds & Surfaces */
+    --bg-body: #f1f7fc;
+    --surface-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+
+    /* Borders & Shadows */
+    --border-soft: rgba(2, 132, 199, 0.14);
+    --border-light: #e2e8f0;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+    --shadow-md: 0 4px 16px -2px rgba(2, 132, 199, 0.1), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 12px 30px -4px rgba(2, 132, 199, 0.16), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+    --shadow-ocean-btn: 0 4px 14px rgba(2, 132, 199, 0.35);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+}
+
+/* Base Setup */
 body {
-    background-color: #f4f6f9;
-}
-
-.card {
-    margin-bottom: 1rem;
-}
-
-table.table {
-    background: white;
-}
-
-/* ===== Chat widget ===== */
-#ktx-chat-toggle {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #0d6efd;
-    color: white;
-    border: none;
-    font-size: 24px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    z-index: 1050;
-    cursor: pointer;
-}
-
-#ktx-chat-box {
-    position: fixed;
-    bottom: 90px;
-    right: 24px;
-    width: 340px;
-    max-width: 90vw;
-    height: 440px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    background-color: var(--bg-body);
+    background-image: var(--grad-hero);
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    z-index: 1050;
 }
 
-.ktx-chat-header {
-    background: #0d6efd;
-    color: white;
-    padding: 10px 14px;
+main.main-content {
+    flex: 1;
+}
+
+/* Typography Enhancements */
+h1, h2, h3, h4, h5, h6 {
+    color: #0f2744;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+a {
+    color: var(--ocean-600);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+a:hover {
+    color: var(--ocean-700);
+}
+
+/* ==========================================================================
+   NAVBAR & HEADER - DEEP OCEAN LUXURY
+   ========================================================================== */
+.navbar-custom {
+    background: var(--grad-navbar);
+    box-shadow: 0 4px 20px rgba(7, 89, 133, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.75rem 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    backdrop-filter: blur(10px);
+}
+
+.navbar-brand-custom {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    letter-spacing: -0.03em;
+}
+
+.brand-badge {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.88) !important;
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.5rem 0.85rem !important;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    margin: 0 2px;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-badge-pill {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff !important;
+    border-radius: 30px;
+    padding: 0.35rem 0.9rem !important;
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
-.ktx-chat-messages {
-    flex: 1;
-    padding: 12px;
-    overflow-y: auto;
-    background: #f8f9fa;
+/* ==========================================================================
+   CARDS & SURFACES - BRIGHT, CLEAN & ELEVATED
+   ========================================================================== */
+.card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
 }
 
-.ktx-msg {
-    padding: 8px 12px;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    max-width: 85%;
-    white-space: pre-wrap;
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(2, 132, 199, 0.25);
+}
+
+.card-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-soft);
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+    color: var(--ocean-900);
+}
+
+.card-header-ocean {
+    background: var(--grad-card-header);
+    border-bottom: 1px solid var(--ocean-200);
+    color: var(--ocean-800);
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* ==========================================================================
+   STAT & KPI CARDS - VIBRANT OCEAN GRADIENTS
+   ========================================================================== */
+.stat-card {
+    position: relative;
+    border-radius: var(--radius-lg);
+    border: none;
+    overflow: hidden;
+    color: #ffffff;
+    padding: 1.35rem;
+    box-shadow: 0 8px 24px -4px rgba(2, 132, 199, 0.25);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -4px rgba(2, 132, 199, 0.35);
+}
+
+.stat-card-ocean {
+    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+}
+
+.stat-card-teal {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    box-shadow: 0 8px 24px -4px rgba(13, 148, 136, 0.25);
+}
+
+.stat-card-amber {
+    background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+    box-shadow: 0 8px 24px -4px rgba(217, 119, 6, 0.25);
+}
+
+.stat-card-coral {
+    background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
+    box-shadow: 0 8px 24px -4px rgba(225, 29, 72, 0.25);
+}
+
+.stat-number {
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.03em;
+}
+
+.stat-label {
     font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.92;
 }
 
-.ktx-msg-bot {
-    background: #e9ecef;
-    color: #212529;
-    margin-right: auto;
+/* ==========================================================================
+   BUTTONS - OCEAN BLUE GLOW
+   ========================================================================== */
+.btn {
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.55rem 1.15rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
 }
 
-.ktx-msg-user {
-    background: #0d6efd;
-    color: white;
-    margin-left: auto;
+.btn-primary {
+    background: var(--grad-ocean);
+    border: none;
+    color: #ffffff;
+    box-shadow: var(--shadow-ocean-btn);
 }
 
-.ktx-msg-loading {
-    font-style: italic;
-    opacity: 0.7;
+.btn-primary:hover, .btn-primary:focus {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45);
+    transform: translateY(-1.5px);
 }
 
-.ktx-chat-input {
-    display: flex;
-    gap: 6px;
-    padding: 8px;
-    border-top: 1px solid #dee2e6;
+.btn-primary:active {
+    transform: translateY(0);
 }
 
-.ktx-chat-input input {
-    flex: 1;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    padding: 6px 10px;
+.btn-outline-primary {
+    border: 1.5px solid var(--ocean-600);
+    color: var(--ocean-600);
+    background: #ffffff;
+}
+
+.btn-outline-primary:hover {
+    background: var(--ocean-600);
+    border-color: var(--ocean-600);
+    color: #ffffff;
+    box-shadow: var(--shadow-ocean-btn);
+    transform: translateY(-1.5px);
+}
+
+.btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.825rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+}
+
+/* ==========================================================================
+   TABLES - CLEAN, CRISP & MODERN
+   ========================================================================== */
+.table-responsive {
+    border-radius: var(--radius-lg);
+    background: #ffffff;
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+    background: #ffffff;
+    color: var(--text-main);
+}
+
+.table thead th {
+    background-color: var(--ocean-50);
+    color: var(--ocean-800);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.9rem 1rem;
+    border-bottom: 2px solid var(--ocean-200);
+    white-space: nowrap;
+}
+
+.table tbody td {
+    padding: 0.95rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.92rem;
+}
+
+.table tbody tr:hover {
+    background-color: #f7fbff;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(240, 249, 255, 0.35);
+}
+
+/* ==========================================================================
+   BADGES & PILLS
+   ========================================================================== */
+.badge {
+    font-weight: 600;
+    padding: 0.35rem 0.7rem;
+    border-radius: 30px;
+    letter-spacing: 0.02em;
+}
+
+.badge-ocean {
+    background-color: var(--ocean-100);
+    color: var(--ocean-700);
+    border: 1px solid var(--ocean-200);
+}
+
+.badge-success-soft {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-warning-soft {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.badge-danger-soft {
+    background-color: #ffe4e6;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
+}
+
+/* ==========================================================================
+   FORMS & INPUTS
+   ========================================================================== */
+.form-control, .form-select {
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.9rem;
+    font-size: 0.92rem;
+    background-color: #ffffff;
+    color: var(--text-main);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--ocean-500);
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+    background-color: #ffffff;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #334155;
+    margin-bottom: 0.4rem;
+}
+
+/* ==========================================================================
+   AI FEATURES & SPECIAL COMPONENTS
+   ========================================================================== */
+.ai-feature-card {
+    background: #ffffff;
+    border: 1.5px solid rgba(2, 132, 199, 0.18);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--grad-ocean);
+}
+
+.ai-feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--ocean-400);
+}
+
+.ai-badge-score {
+    background: var(--grad-ocean);
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 800;
+    padding: 0.45rem 1rem;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    letter-spacing: -0.02em;
+}
+
+.ai-problem-group-card {
+    border-left: 5px solid var(--ocean-600) !important;
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-soft);
+    transition: all 0.25s ease;
+}
+
+.ai-problem-group-card:hover {
+    box-shadow: var(--shadow-md);
+    border-left-color: var(--ocean-500) !important;
+}
+
+.ai-recommendation-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-left: 4px solid var(--ocean-600);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    color: var(--ocean-900);
+}
+
+.ai-highlight-pill {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.825rem;
+    display: inline-block;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    border: 1px solid #bae6fd;
+}
+
+/* ==========================================================================
+   ALERTS & FEEDBACK
+   ========================================================================== */
+.alert {
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    padding: 0.9rem 1.25rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-success {
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.alert-danger {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.alert-info {
+    background-color: #f0f9ff;
+    border-color: #bae6fd;
+    color: #0369a1;
+}
+
+.alert-warning {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.footer-custom {
+    background: #ffffff;
+    border-top: 1px solid var(--border-soft);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    padding: 1.5rem 0;
+    margin-top: 3.5rem;
 }

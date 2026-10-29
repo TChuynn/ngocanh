@@ -1,8 +1,10 @@
 # Hệ thống quản lý Ký túc xá có tích hợp AI (Demo)
 
-Bản demo ASP.NET Core MVC (.NET 8) minh hoạ đầy đủ 7 Use Case của đồ án "Hệ thống quản
+Bản demo ASP.NET Core MVC (.NET 8) minh hoạ đầy đủ các Use Case của đồ án "Hệ thống quản
 lý ký túc xá có tích hợp AI", dùng EF Core In-Memory Database (không cần cài SQL Server)
-và có sẵn tính năng **Chatbot AI hỏi-đáp** tích hợp trong ứng dụng.
+với các tính năng AI chuyên sâu:
+- **AI Tóm tắt phản ánh/sự cố theo nhóm vấn đề** dành cho Quản lý KTX (Điện, Nước, Cơ sở vật chất, An ninh / Vi phạm nội quy, Mạng / Tiện ích).
+- **AI Gợi ý xếp phòng dựa trên chỗ trống và tiêu chí cơ bản** dành cho Sinh viên (Khoa/Lớp, Tầng, Ngân sách, Phong cách sống).
 
 ## 1. Yêu cầu môi trường
 - .NET SDK 8.0 trở lên: https://dotnet.microsoft.com/download
@@ -12,7 +14,7 @@ và có sẵn tính năng **Chatbot AI hỏi-đáp** tích hợp trong ứng d�
 
 ### Cách 1: Dùng dòng lệnh (khuyên dùng, nhanh nhất)
 ```bash
-cd KTXManagement.Demo
+cd demo
 dotnet restore
 dotnet run
 ```
@@ -32,7 +34,7 @@ mỗi lần `dotnet run`.
 
 | Tài khoản | Vai trò       | Ghi chú                                   |
 |-----------|---------------|--------------------------------------------|
-| quanly    | Quản lý KTX   | Xếp phòng, hạ tầng, thống kê, phản ánh      |
+| quanly    | Quản lý KTX   | Xếp phòng, hạ tầng, thống kê, phản ánh & AI tóm tắt sự cố |
 | ketoan    | Kế toán       | Tạo phiếu phí, ghi nhận thanh toán          |
 | sv001     | Sinh viên     | Đang ở phòng A101                          |
 | sv002     | Sinh viên     | Đang ở phòng A101, đang nợ tiền quá hạn     |
@@ -43,10 +45,10 @@ mỗi lần `dotnet run`.
 ## 4. Cấu hình AI (tuỳ chọn)
 
 Mặc định `appsettings.json` để trống `AIConfig:ApiKey`, khi đó `AIService` sẽ tự dùng
-bộ trả lời **rule-based** dựa trên dữ liệu đã seed — ứng dụng chạy được ngay, không cần
+bộ phân tích AI thông minh nội bộ dựa trên dữ liệu đã seed — ứng dụng chạy được ngay, không cần
 Internet hay API key.
 
-Nếu muốn Chatbot trả lời tự nhiên hơn bằng Claude thật, điền API key vào
+Nếu muốn tăng cường thêm đánh giá chuyên sâu bằng Claude thật, điền API key vào
 `appsettings.json`:
 ```json
 "AIConfig": {
@@ -56,20 +58,18 @@ Nếu muốn Chatbot trả lời tự nhiên hơn bằng Claude thật, điền 
   "ApiUrl": "https://api.anthropic.com/v1/messages"
 }
 ```
-Hoặc set biến môi trường tương ứng (`AIConfig__ApiKey`) thay vì sửa file.
 
-## 5. Sơ đồ 7 Use Case ↔ chức năng trong mã nguồn
+## 5. Sơ đồ các Use Case & tính năng AI trong mã nguồn
 
-| UC    | Nội dung                                              | Controller             |
-|-------|--------------------------------------------------------|-------------------------|
-| UC001 | Đăng nhập và phân quyền (kiểm tra khóa tài khoản trước, khóa sau 5 lần sai) | `AccountController` |
-| UC002 | Quản lý hạ tầng KTX (tòa/tầng/phòng/giường)            | `HaTangController`      |
-| UC003 | Quản lý hồ sơ sinh viên nội trú                        | `SinhVienController`    |
-| UC004 | Đăng ký ở, xếp phòng (AI gợi ý), chuyển phòng, trả phòng (kiểm tra công nợ) | `DangKyOController` |
-| UC005 | Theo dõi phí phòng và công nợ                          | `PhiCongNoController`   |
-| UC006 | Quản lý phản ánh/sự cố và vi phạm nội quy               | `PhanAnhController`     |
-| UC007 | Thống kê công suất/công nợ/phản ánh + tóm tắt bằng AI   | `ThongKeController`     |
-| —     | Chatbot AI hỏi-đáp (mọi vai trò)                        | `ChatController` + `Services/AIService.cs` |
+| Chức năng | Mô tả chi tiết | Controller / View |
+|-----------|----------------|-------------------|
+| UC001 | Đăng nhập và phân quyền (kiểm tra khóa tài khoản, khóa sau 5 lần sai) | `AccountController` |
+| UC002 | Quản lý hạ tầng KTX (tòa/tầng/phòng/giường) | `HaTangController` |
+| UC003 | Quản lý hồ sơ sinh viên nội trú | `SinhVienController` |
+| **UC004 + AI** | **AI Gợi ý xếp phòng theo chỗ trống và tiêu chí cho Sinh viên** (Khoa/Lớp, Tầng, Ngân sách, Phong cách sống) + Quản lý duyệt xếp phòng, chuyển phòng, trả phòng | `DangKyOController` (`GoiYPhong.cshtml`) |
+| UC005 | Theo dõi phí phòng và công nợ | `PhiCongNoController` |
+| **UC006 + AI** | **AI Tóm tắt phản ánh/sự cố theo nhóm vấn đề cho Quản lý KTX** (Điện, Nước, CSVC, An ninh, Mạng), đánh giá mức độ khẩn cấp & đề xuất giải pháp | `PhanAnhController` (`TomTatAI.cshtml`) |
+| UC007 | Thống kê công suất/công nợ/phản ánh + tích hợp tóm tắt AI | `ThongKeController` |
 
 ## 6. Ghi chú
 - Mật khẩu được băm bằng SHA256 đơn giản (`Services/PasswordHasher.cs`) — chỉ dùng cho demo,

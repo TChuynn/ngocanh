@@ -37,9 +37,14 @@
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-header">🤖 Tóm tắt phản ánh/sự cố bằng AI</div>
+<div class="card mt-4 shadow-sm border-primary-subtle">
+    <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-primary">🤖 Tóm tắt phản ánh/sự cố theo nhóm vấn đề bằng AI</span>
+        <a asp-controller="PhanAnh" asp-action="TomTatAI" class="btn btn-sm btn-primary">
+            Xem báo cáo phân nhóm &amp; đề xuất chi tiết →
+        </a>
+    </div>
     <div class="card-body">
-        <pre style="white-space: pre-wrap; font-family: inherit;">@Model.TomTatAI</pre>
+        <pre style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;" class="mb-0 text-secondary">@Model.TomTatAI</pre>
     </div>
 </div>

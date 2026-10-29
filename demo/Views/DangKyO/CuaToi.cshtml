@@ -1,27 +1,60 @@
 @model List<DangKyO>
 @{ ViewData["Title"] = "Đăng ký ở của tôi"; }
+
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>🛏️ Đăng ký ở của tôi</h4>
-    <a asp-action="GuiYeuCau" class="btn btn-primary">+ Gửi yêu cầu đăng ký ở</a>
+    <h4 class="mb-0">🛏️ Đăng ký ở của tôi</h4>
+    <div class="d-flex gap-2">
+        <a asp-action="GoiYPhong" class="btn btn-outline-primary">
+            ✨ AI Gợi ý chọn phòng
+        </a>
+        <a asp-action="GuiYeuCau" class="btn btn-primary">
+            + Gửi yêu cầu đăng ký ở
+        </a>
+    </div>
+</div>
+
+<div class="card bg-light border-primary-subtle shadow-sm mb-4">
+    <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <span class="fw-bold text-primary">💡 Chưa biết nên chọn phòng nào?</span>
+                <span class="text-muted small ms-1">Hãy để AI phân tích phòng trống theo bạn cùng khoa/lớp, tầng, ngân sách và phong cách sống của bạn!</span>
+            </div>
+            <a asp-action="GoiYPhong" class="btn btn-sm btn-primary">Khám phá gợi ý AI ngay →</a>
+        </div>
+    </div>
 </div>
 
 @if (!Model.Any())
 {
-    <p class="text-muted">Bạn chưa có yêu cầu đăng ký ở nào.</p>
+    <p class="text-muted">Bạn chưa có yêu cầu đăng ký ở nào. Hãy dùng chức năng AI Gợi ý phòng hoặc gửi yêu cầu mới.</p>
 }
 else
 {
-    <table class="table table-striped">
-        <thead><tr><th>Ngày đăng ký</th><th>Phòng</th><th>Giường</th><th>Trạng thái</th><th>Ghi chú</th><th></th></tr></thead>
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Ngày đăng ký</th>
+                <th>Phòng</th>
+                <th>Giường</th>
+                <th>Trạng thái</th>
+                <th>Ghi chú / Gợi ý AI</th>
+                <th style="width: 160px;">Thao tác</th>
+            </tr>
+        </thead>
         <tbody>
         @foreach (var dk in Model)
         {
             <tr>
                 <td>@dk.NgayDangKy.ToString("dd/MM/yyyy")</td>
-                <td>@dk.Phong?.SoPhong</td>
-                <td>@dk.Giuong?.SoGiuong</td>
-                <td><span class="badge text-bg-info">@dk.TrangThai</span></td>
-                <td class="small">@dk.GhiChu</td>
+                <td><span class="badge text-bg-light border">@(dk.Phong?.SoPhong ?? "Chưa xếp")</span></td>
+                <td>@(dk.Giuong?.SoGiuong ?? "—")</td>
+                <td>
+                    <span class="badge text-bg-@(dk.TrangThai == TrangThaiDangKyO.DangO ? "success" : dk.TrangThai == TrangThaiDangKyO.ChoDuyet ? "warning" : "info")">
+                        @dk.TrangThai
+                    </span>
+                </td>
+                <td class="small text-secondary">@dk.GhiChu</td>
                 <td>
                     @if (dk.TrangThai == TrangThaiDangKyO.DangO)
                     {
